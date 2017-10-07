@@ -8,9 +8,5 @@
   },
   "lib": [
       "es2016"
-  ],
-  "include": [
-      "typings/**/*",
-      "src/scripts/**/*"
   ]
 }

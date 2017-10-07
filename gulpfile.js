@@ -46,7 +46,7 @@ gulp.task('less', function() {
 gulp.task('typescript', function() {
   var project = ts.createProject('tsconfig.json');
 
-  var result = gulp.src('./src/scripts/*.ts')
+  var result = gulp.src(['./src/scripts/**/*.ts', './typings/**/*.d.ts'])
     .pipe(project());
 
   return result.js.pipe(gulp.dest("./build/scripts"));

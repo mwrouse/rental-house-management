@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+      "module": "amd",
+      "rootDir": "src",
+      "outDir": "build",
+      "target": "es2016",
+      "watch": false
+  },
+  "lib": [
+      "es2016"
+  ],
+  "include": [
+      "typings/**/*",
+      "src/scripts/**/*"
+  ]
+}

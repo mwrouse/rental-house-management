@@ -55,7 +55,6 @@ class Router {
    */
   public function Register($path_regex, $func, $methods = ['GET']) {
     // Add to the array of routes
-    $func();
     array_push($this->_routes, new Route($path_regex, $func, $methods));
   }
 

@@ -34,7 +34,7 @@ gulp.task('javascript', function() {
  * Compile less
  */
 gulp.task('less', function() {
-  return gulp.src('./src/styles/**/*.less')
+  return gulp.src('./src/styles/main.less')
     .pipe(less())
     .pipe(gulp.dest("./build/styles"));
 });

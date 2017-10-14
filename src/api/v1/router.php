@@ -29,6 +29,14 @@ class Request {
     }
 
     /**
+     * Redirects to another page
+     * @param string $location url to redirect to
+     */
+    public function Redirect($location) {
+      header("Location: " . $location);
+    }
+
+    /**
      * Returns the object without POST/GET Data
      */
     public function Serialize() {
@@ -52,7 +60,7 @@ class Route {
   public function __construct($methods, $path, $fn, $argDefinitions = []) {
     $this->_methods = $methods;
     $this->_path = $this->_parseArgs($path, $argDefinitions);
-    $this->_callback = Closure::fromCallable($fn);
+    $this->_callback = $fn;
   }
 
 

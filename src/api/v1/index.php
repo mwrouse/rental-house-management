@@ -9,6 +9,9 @@ header('Content-type: application/json');
 
 $Router = new Router('/api/v1'); // Create router
 
+$Router->SetParameters([
+    'id' => '[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}'
+]);
 
 
 /*****************************

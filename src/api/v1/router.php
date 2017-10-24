@@ -14,6 +14,21 @@ class Request {
       $this->Data = $data;
     }
 
+    /**
+     * Will abort the request if data is not specified
+     */
+    public function RequiredData($requiredData) {
+        if (!is_array($requiredData)) {
+            $requiredData = [$requiredData];
+        }
+
+        // Check for the data
+        foreach ($requiredData as $key) {
+            if (!isset($this->Data[$key]) || empty($this->Data[$key])) {
+                $this->Abort('400', 'Invalid Request');
+            }
+        }
+    }
 
     /**
      * Aborts a response with a code
@@ -57,12 +72,29 @@ class Route {
 
   private $_methods = []; // List of methods that this endpoint handles
 
+  private $_requiredData = [];
+  private $_originalPath = '';
+
   public function __construct($methods, $path, $fn, $argDefinitions = []) {
     $this->_methods = $methods;
+    $this->_originalPath = $path;
     $this->_path = $this->_parseArgs($path, $argDefinitions);
     $this->_callback = $fn;
   }
 
+  /**
+   * Sets the required data that an endpoint must have to apply
+   */
+  public function RequiredData($data) {
+    if (!is_array($data)) {
+      array_push($this->_requiredData, $data);
+    }
+    else {
+      $this->_requiredData = array_merge($this->_requiredData, $data);
+    }
+
+    return $this;
+  }
 
   /**
    * Tries to run the endpoint when given a request
@@ -87,11 +119,13 @@ class Route {
       }
 
       try {
+        $this->_verifyData($request);
+
         // Perform the endpoint callback
         $callbackReturn = call_user_func_array(Closure::bind($this->_callback, $request), $args);
 
         if ($callbackReturn == null)
-            throw new Exception('No Result');
+          throw new Exception('No Result');
 
         return (object) ['Data' => $callbackReturn, 'Request' => $request->Serialize()];
       }
@@ -101,6 +135,18 @@ class Route {
     }
 
     return null;
+  }
+
+
+  /**
+   * Verify that all post/get data exists
+   */
+  private function _verifyData($request) {
+    foreach ($this->_requiredData as $data) {
+      if (!isset($request->Data[$data]) || empty($request->Data[$data])) {
+        $request->Abort('400', 'Invalid Request');
+      }
+    }
   }
 
   /**
@@ -245,12 +291,12 @@ class Router {
     $request = new Request(strtoupper($method), $this->_base . $this->_normalizeEndpoint($url), $postData);
 
     foreach ($this->_routes as $route) {
-        $ret = $route->TryRun($request);
+      $ret = $route->TryRun($request);
 
-        if (!is_null($ret)) {
-            $found = true;
-            break;
-        }
+      if (!is_null($ret)) {
+        $found = true;
+        break;
+      }
     }
 
     return $ret;
@@ -289,6 +335,8 @@ class Router {
     // Create new route
     $route = new Route($methods, $this->_base .$path, $func, $definitions);
     array_push($this->_routes, $route);
+
+    return $route;
   }
 
   /**

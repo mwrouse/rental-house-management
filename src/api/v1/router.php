@@ -131,7 +131,7 @@ class Route {
       }
     }
 
-    return '/^' . $final . '$/i';
+    return '/^' . $final . '(\/?)$/i';
   }
 
 }
@@ -165,6 +165,10 @@ class Router {
    */
   public function SetBase($base) {
     $this->_base = $this->_normalizeEndpoint($base);
+  }
+
+  public function GetBase() {
+    return $this->_base;
   }
 
   /**
@@ -222,13 +226,34 @@ class Router {
     foreach ($this->_routes as $route) {
       $ret = $route->TryRun($request);
 
-      if ($ret != null) {
+      if (!is_null($ret)) {
         $found = true;
         break;
       }
     }
 
     echo json_encode($ret);
+  }
+
+  /**
+   * Get content from a local URL
+   */
+  public function RunLocal($method, $url, $postData=null) {
+    $ret = null;
+    $found = false;
+
+    $request = new Request(strtoupper($method), $this->_base . $this->_normalizeEndpoint($url), $postData);
+
+    foreach ($this->_routes as $route) {
+        $ret = $route->TryRun($request);
+
+        if (!is_null($ret)) {
+            $found = true;
+            break;
+        }
+    }
+
+    return $ret;
   }
 
   /**

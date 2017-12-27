@@ -41,6 +41,15 @@ gulp.task('less', function() {
 
 
 /**
+ * Copies CSS
+ */
+gulp.task('css', function() { 
+  return gulp.src('./src/styles/**/*.css')
+    .pipe(gulp.dest("./build/styles"));
+});
+
+
+/**
  * Compile TypeScript
  */
 gulp.task('typescript', function() {
@@ -53,4 +62,4 @@ gulp.task('typescript', function() {
 });
 
 
-gulp.task('default', ['html', 'php', 'javascript', 'less', 'typescript']);
+gulp.task('default', ['html', 'php', 'javascript', 'less', 'css', 'typescript']);

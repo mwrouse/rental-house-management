@@ -28,5 +28,8 @@ if (urlParts.length > 1) {
 
 // Require everything
 require(['knockout', 'viewmodels/' + viewModel + 'ViewModel'], (ko, vm) => {
-  ko.applyBindings(new vm());
+  require(['knockout'], (ko) => {
+
+    ko.applyBindings(new vm());
+  });
 });

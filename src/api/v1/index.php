@@ -36,10 +36,10 @@ $Router->Get('/bills', function() {
 
   $db = database();
 
-  $qry = $db->query("SELECT Id FROM bills WHERE FullyPaid=false");
+  $rows = $db->query("SELECT Id FROM bills WHERE FullyPaid=false");
 
   $bills = [];
-  while ($row = $qry->fetch_assoc()) {
+  foreach ($rows as $row) {
     $bill = $Router->RunLocal('GET', '/bills/' . $row['Id']);
     array_push($bills, $bill->Data);
   }
@@ -62,21 +62,25 @@ $Router->Post('/bills/new', function() {
     $this->Abort('400', 'Invalid Tenant');
   }
 
+  $id = uuid(); // ID for a new bill
+
   // Tenant exists, create the bill
   $db = database();
-
-  $id = uuid();
-  $qryStr = sprintf("INSERT INTO bills (Id, Title, DueDate, CreatedBy, Amount, PayTO) VALUES ('%s', '%s', '%s', %s, %s, '%s')", $id, $this->Data['Title'], $this->Data['DueDate'], $tenant->Data['AutoId'], $this->Data['Amount'], $this->Data['PayTo']);
-  $qrySuccess = $db->query($qryStr);
+  $result = $db->query("INSERT INTO bills (Id, Title, DueDate, CreatedBy, Amount, PayTo) VALUES (?, ?, ?, ?, ?, ?)", [
+    $id, 
+    $this->Data['Title'], 
+    $this->Data['DueDate'], 
+    $tenant->Data['Id'], 
+    $this->Data['Amount'], 
+    $this->Data['PayTo']
+  ]);
 
   // Verify that the bill was created
-  if ($qrySuccess) {
-    $url = sprintf('bills/%s', $id);
-    $check = $Router->RunLocal('GET', $url);
+  $url = sprintf('bills/%s', $id);
+  $check = $Router->RunLocal('GET', $url);
 
-    if (!is_null($check) && isset($check->Data)) {
-      return $check->Data;
-    }
+  if (!is_null($check) && isset($check->Data)) {
+    return $check->Data;
   }
 
   $this->Abort('204', 'Could not create bill');
@@ -89,13 +93,13 @@ $Router->Get('/bills/{id}', function($id) {
   global $Router;
 
   $db = database();
-
-  $qryStr = sprintf("SELECT AutoId, Id, Title, DueDate, Amount, CreatedBy, FullyPaid, PayTo FROM bills WHERE Id='%s' OR AutoId='%s'", $id, $id);
-  $qry = $db->query($qryStr);
-
-  $res = $qry->fetch_assoc();
+  $res = $db->query("SELECT Id, Title, DueDate, Amount, CreatedBy, FullyPaid, PayTo FROM bills WHERE Id=?", [$id]);
+  
   if ($res == null)
     $this->Abort(404, 'Could not find bill');
+
+  // Only use the first item in the result (should only ever be one)
+  $res = $res[0];
 
   // Retrieve the tenant
   $tenant = $Router->RunLocal('GET', '/tenants/' . $res['CreatedBy']);
@@ -106,7 +110,6 @@ $Router->Get('/bills/{id}', function($id) {
   $res['PayTo'] = $target->Data;
 
   // Data Type Conversions
-  $res['AutoId'] = intval($res['AutoId']);
   $res['Amount'] = floatval($res['Amount']);
   $res['FullyPaid'] = ($res['FullyPaid'] == 0) ? false : true;
 
@@ -128,14 +131,13 @@ $Router->Get('/bills/{id}/payments', function($id) {
 
   // Get list of payments
   $db = database();
-
-  $qryStr = sprintf("SELECT AutoId FROM payments WHERE BillId='%s' ORDER BY AutoId ASC", $bill['AutoId']);
-
-  $qry = $db->query($qryStr);
+  $rows = $db->query("SELECT Id FROM payments WHERE BillId=? ORDER BY PaymentDate ASC", [
+    $bill['Id']
+  ]);
 
   $payments = [];
-  while ($row = $qry->fetch_assoc()) {
-    $payment = $Router->RunLocal('GET', '/bills/'.$bill['AutoId'].'/payments/'.$row['AutoId']);
+  foreach ($rows as $row) {
+    $payment = $Router->RunLocal('GET', '/bills/'.$bill['Id'].'/payments/'.$row['Id']);
     array_push($payments, $payment->Data);
   }
 
@@ -157,14 +159,17 @@ $Router->Get('/bills/{id}/payments/{id}', function($billId, $paymentId) {
 
   // Fetch the payment from the database
   $db = database();
+  $res = $db->query("SELECT PaidBy, Amount, PaymentDate, PaidInFull FROM payments WHERE BillId=? AND Id=?", [
+    $bill['Id'],
+    $paymentId
+  ]);
 
-  $qryStr = sprintf("SELECT PaidBy, Amount, PaymentDate, PaidInFull FROM payments WHERE BillId='%s' AND (AutoId='%s' OR Id='%s')", $bill['AutoId'], $paymentId, $paymentId);
-  $qry = $db->query($qryStr);
-
-  $res = $qry->fetch_assoc();
   if ($res == null) {
     $this->Abort('404', 'Could not find payment');
   }
+
+  // Should only ever be one result
+  $res = $res[0];
 
   // Add computed data
   $tenant = $Router->RunLocal('GET', '/tenants/' . $res['PaidBy']);
@@ -198,23 +203,26 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
   }
   $tenant = $tenant->Data;
 
+  $newId = uuid(); // Id for new payment
+
   // Add to the database
   $db = database();
+  $qry = $db->query("INSERT INTO payments (Id, BillId, Paidby, Amount, PaidInFull) VALUES (?, ?, ?, ?, ?)", [
+    $newId, 
+    $bill['Id'], 
+    $tenant['Id'], 
+    $this->Data['Amount'],
+    $this->Data['PaidInFull']
+  ]);
 
-  $id = uuid();
-  $qryStr = sprintf("INSERT INTO payments (Id, BillId, PaidBy, Amount, PaidInFull) VALUES ('%s',%s, %s, %s, %s)", $id, $bill['AutoId'], $tenant['AutoId'], $this->Data['Amount'], $this->Data['PaidInFull']);
-  $qrySuccess = $db->query($qryStr);
+  // Confirm that the payment was created
+  $payment = $Router->RunLocal('GET', '/bills/'.$id.'/payments/'.$newId);
 
-  if ($qrySuccess) {
-    // Confirm that the payment was created
-    $payment = $Router->RunLocal('GET', '/bills/'.$id.'/payments/'.$id);
-
-    if (!is_null($payment) && isset($payment->Data)) {
-      // TODO: Handle the bill being paid in full
-      return $payment->Data;
-    }
+  if (!is_null($payment) && isset($payment->Data)) {
+    // TODO: Handle the bill being paid in full
+    return $payment->Data;
   }
-
+  
   $this->Abort('204', 'Could not add payment');
 })->RequiredData(['TenantId', 'Amount', 'PaidInFull']);
 
@@ -233,17 +241,19 @@ $Router->Post('/bills/{id}/edit', function($id) {
 
   // Update the bill
   $db = database();
+  $res = $db->query("UPDATE bills SET Title=?, DueDate=?, Amount=? WHERE Id=?", [
+    $this->Data['Title'], 
+    $this->Data['DueDate'], 
+    $this->Data['Amount'], 
+    $bill['Id']
+  ]);
 
-  $qryStr = sprintf("UPDATE bills SET Title='%s', DueDate='%s', Amount='%s' WHERE AutoId='%s'", $this->Data['Title'], $this->Data['DueDate'], $this->Data['Amount'], $bill['AutoId']);
-  $qrySuccess = $db->query($qryStr);
-
-  if ($qrySuccess) {
-    $bill = $Router->RunLocal('GET', '/bills/'.$id);
-    if (!is_null($bill) && isset($bill->Data)) {
-      return $bill->Data;
-    }
+  // Get the new bill data
+  $bill = $Router->RunLocal('GET', '/bills/'.$id);
+  if (!is_null($bill) && isset($bill->Data)) {
+    return $bill->Data;
   }
-
+ 
   $this->Abort('204', 'Could not update bill');
 })->RequiredData(['Title', 'DueDate', 'Amount']);
 
@@ -262,10 +272,10 @@ $Router->Get('/tenants', function() {
   $db = database();
 
   // Query for all active tenants
-  $qry = $db->query("SELECT Id FROM tenants WHERE EndDate IS NULL or EndDate > CURDATE()");
+  $rows = $db->query("SELECT Id FROM tenants WHERE EndDate IS NULL or EndDate > CURDATE()");
 
   $tenants = [];
-  while ($row = $qry->fetch_assoc()) {
+  foreach ($rows as $row) {
     $tenant = $Router->RunLocal('GET', '/tenants/' . $row['Id']);
     array_push($tenants, $tenant->Data);
   }
@@ -281,23 +291,26 @@ $Router->Post('/tenants/new', function() {
 
   // TODO: Verfy StartDate is an actual date
 
+  $id = uuid(); // Id for the new tenant 
+
   // Create the tenant
   $db = database();
+  $res = $db->query("INSERT INTO tenants (Id, FirstName, LastName, StartDate) VALUES (?, ?, ?, ?)", [
+    $id, 
+    $this->Data['FirstName'], 
+    $this->Data['LastName'], 
+    $this->Data['StartDate']
+  ]);
 
-  $id = uuid();
-  $qryStr = sprintf("INSERT INTO tenants (Id, FirstName, LastName, StartDate) VALUES ('%s', '%s', '%s', '%s')", $id, $this->Data['FirstName'], $this->Data['LastName'], $this->Data['StartDate']);
-  $qrySuccess = $db->query($qryStr);
 
   // Verify the tenant was actually created
-  if ($qrySuccess) {
-    $url = sprintf('/tenants/%s', $id);
-    $tenant = $Router->RunLocal('GET', $url);
+  $url = sprintf('/tenants/%s', $id);
+  $tenant = $Router->RunLocal('GET', $url);
 
-    if (!is_null($tenant) && isset($tenant->Data)) {
-      return $tenant->Data; // Tenant Created
-    }
+  if (!is_null($tenant) && isset($tenant->Data)) {
+    return $tenant->Data; // Tenant Created
   }
-
+  
   // Failed to create tenant
   $this->Abort('204', 'Could not create tenant');
 })->RequiredData(['FirstName', 'LastName', 'StartDate']);
@@ -307,21 +320,20 @@ $Router->Post('/tenants/new', function() {
  */
 $Router->Get('/tenants/{id}', function($id) {
   $db = database();
+  $res = $db->query("SELECT Id, FirstName, LastName, StartDate, EndDate FROM tenants WHERE Id=?", [
+    $id
+  ]);
 
-  $qryStr = sprintf("SELECT AutoId, Id, FirstName, LastName, StartDate, EndDate FROM tenants WHERE Id='%s' OR AutoID='%s'", $id, $id);
-  $qry = $db->query($qryStr);
-
-  $res = $qry->fetch_assoc();
   if ($res == null) {
     $this->Abort(404, 'Could not find tenant');
   }
 
+  // Should only ever be one result
+  $res = $res[0];
+
   // Add computed values
   $res['Name'] = $res['FirstName'] . ' ' . $res['LastName'];
   $res['AbbreviatedName'] = $res['FirstName'] . ' ' . substr($res['LastName'], 0, 1) . '.';
-
-  // Data Type Conversion
-  $res['AutoId'] = intval($res['AutoId']);
 
   return $res;
 });
@@ -341,24 +353,20 @@ $Router->Post('/tenants/{id}/edit', function($id) {
 
   // Update in the database
   $db = database();
+  $res = $db->query("UPDATE tenants SET FirstName=?, LastName=?, StartDate=?, EndDate=? WHERE Id=?", [
+    $this->Data['FirstName'], 
+    $this->Data['LastName'], 
+    $this->Data['StartDate'], 
+    (array_key_exists('EndDate', $this->Data)) ? $this->Data['EndDate'] : null, 
+    $tenant['Id']
+  ]);
 
-  $qryStr = sprintf("UPDATE tenants SET FirstName='%s', LastName='%s', StartDate='%s' WHERE AutoId='%s'", $this->Data['FirstName'], $this->Data['LastName'], $this->Data['StartDate'], $tenant['AutoId']);
-
-  // Update EndDate if it was specified
-  if (array_key_exists('EndDate', $this->Data)) {
-    $qryStr = sprintf("UPDATE tenants SET FirstName='%s', LastName='%s', StartDate='%s', EndDate='%s' WHERE AutoId='%s'", $this->Data['FirstName'], $this->Data['LastName'], $this->Data['StartDate'], $this->Data['EndDate'], $tenant['AutoId']);
+  // Get the tenant
+  $tenant = $Router->RunLocal('GET', '/tenants/'.$id);
+  if (!is_null($tenant) && isset($tenant->Data)) {
+    return $tenant->Data;
   }
-
-  $qrySuccess = $db->query($qryStr);
-
-  if ($qrySuccess) {
-    // Get the tenant
-    $tenant = $Router->RunLocal('GET', '/tenants/'.$id);
-    if (!is_null($tenant) && isset($tenant->Data)) {
-      return $tenant->Data;
-    }
-  }
-
+  
   $this->Abort('204', 'Could not update tenant');
 })->RequiredData(['FirstName', 'LastName', 'StartDate']);
 
@@ -377,12 +385,11 @@ $Router->Get('/targets', function() {
   global $Router;
 
   $db = database();
-
-  $qry = $db->Query("SELECT Id FROM payment_targets WHERE Archived=false");
+  $rows = $db->Query("SELECT Id FROM payment_targets WHERE Archived=false");
 
   $targets = [];
-  while ($row = $qry->fetch_assoc()) {
-    $target = $Router->RunLocal('/targets/'.$row['Id']);
+  foreach ($rows as $row) {
+    $target = $Router->RunLocal('GET', '/targets/'.$row['Id']);
     array_push($targets, $target->Data);
   }
 
@@ -395,19 +402,22 @@ $Router->Get('/targets', function() {
 $Router->Post('/targets/new', function() {
   global $Router;
 
+  $id = uuid(); // Id for the new target
+
   $db = database();
+  $res = $db->query("INSERT INTO payment_targets (Id, Name, Url) VALUES (?, ?, ?)", [
+    $id, 
+    $this->Data['Name'], 
+    $this->Data['Url']
+  ]);
 
-  $id = uuid();
-  $qryStr = sprintf("INSERT INTO payment_targets (Id, Name, Url) VALUES ('%s', '%s', '%s')", $id, $this->Data['Name'], $this->Data['Url']);
-  $qrySuccess = $db->query($qryStr);
-
-  if ($qrySuccess) {
-    $target = $Router->RunLocal('GET', '/targets/'.$id);
-    if (!is_null($target) && isset($target->Data)) {
-      return $target->Data;
-    }
+  // Check if it was created and return it if it was
+  $target = $Router->RunLocal('GET', '/targets/'.$id);
+  if (!is_null($target) && isset($target->Data)) {
+    return $target->Data;
   }
-
+  
+  // Target not created
   $this->Abort('204', 'Could not create target');
 })->RequiredData(['Name', 'Url']);
 
@@ -418,15 +428,15 @@ $Router->Get('/targets/{id}', function($id) {
   global $Router;
 
   $db = database();
+  $res = $db->query("SELECT Id, Name, Url, Archived FROM payment_targets WHERE Id=?", [
+    $id
+  ]);
 
-  $qryStr = sprintf("SELECT Id, Name, Url, Archived FROM payment_targets WHERE Id='%s'", $id);
-  $qry = $db->query($qryStr);
-
-  $res = $qry->fetch_assoc();
   if ($res == null) {
     // Check if id belongs to a tenant
     $tenant = $Router->RunLocal('GET', '/tenants/'.$id);
     if (!is_null($tenant) && isset($tenant->Data)) {
+      // Convert to a target style object
       $tenant->Data['Url'] = null;
       $tenant->Data['IsTenant'] = true;
       $tenant->Data['Archived'] = ($tenant->Data['EndDate'] == null) ? false : (strtotime($tenant->Data['EndDate']) <= strtotime("now")) ? true : false;
@@ -434,8 +444,11 @@ $Router->Get('/targets/{id}', function($id) {
       return $tenant->Data;
     }
 
+    // Does not belong to a tenant
     $this->Abort('404', 'Could not find Payment Target');
   }
+  
+  $res = $res[0]; // Should only ever be on e
 
   $res['IsTenant'] = false;
 
@@ -459,17 +472,20 @@ $Router->Post('/targets/{id}/edit', function($id) {
 
   // Update
   $db = database();
+  $res = $db->query("UPDATE payment_targets SET Name=?, Url=?, Archived=? WHERE Id=?", [
+    $this->Data['Name'], 
+    $this->Data['Url'], 
+    $this->Data['Archived'], 
+    $id
+  ]);
 
-  $qryStr = sprintf("UPDATE payment_targets SET Name='%s', Url='%s', Archived=%s WHERE Id='%s'", $this->Data['Name'], $this->Data['Url'], $this->Data['Archived'], $id);
-  $qrySuccess = $db->query($qryStr);
-
-  if ($qrySuccess) {
-    $target = $Router->RunLocal('GET', '/targets/'.$id);
-    if (!is_null($target) && isset($target->Data)) {
-      return $target->Data;
-    }
+  // Get the newly updated values
+  $target = $Router->RunLocal('GET', '/targets/'.$id);
+  if (!is_null($target) && isset($target->Data)) {
+    return $target->Data;
   }
-
+  
+  // Could not update
   $this->Abort('204', 'Could not update Payment Target');
 })->RequiredData(['Name', 'Url', 'Archived']);
 
@@ -486,16 +502,15 @@ $Router->Get('/lists', function() {
   global $Router;
 
   $db = database();
-
-  $qry = $db->Query("SELECT Id FROM lists");
+  $rows = $db->query("SELECT Id FROM lists"); 
 
   $lists = [];
-  while ($row = $qry->fetch_assoc()) {
-    $list = $Router->RunLocal('/lists/'.$row['Id']);
+  foreach ($rows as $row) {
+    $list = $Router->RunLocal('GET', '/lists/'.$row['Id']);
     array_push($lists, $list->Data);
   }
 
-  return $targets;
+  return $lists;
 });
 
 /**
@@ -504,43 +519,45 @@ $Router->Get('/lists', function() {
 $Router->Post('/lists/new', function() {
   global $Router;
 
-  $db = database();
+  $id = uuid(); // Id for the new row 
 
-  $id = uuid();
-  $qryStr = sprintf("INSERT INTO lists (Id, ListData) VALUES ('%s', '%s')", $id, $this->Data['List']);
-  $qrySuccess = $db->query($qryStr);
+  $db = database();
+  $res = $db->query("INSERT INTO lists (Id, ListData) VALUES (?, ?)", [
+    $id, 
+    $this->Data['List']
+  ]);
 
   // Verify the list was actually created
-  if ($qrySuccess) {
-    $url = sprintf('/lists/%s', $id);
-    $list = $Router->RunLocal('GET', $url);
+  $url = sprintf('/lists/%s', $id);
+  $list = $Router->RunLocal('GET', $url);
 
-    if (!is_null($list) && isset($list->Data)) {
-      return $list->Data; // List Created
-    }
+  if (!is_null($list) && isset($list->Data)) {
+    return $list->Data; // List Created
   }
 
   // Failed to create list
   $this->Abort('204', 'Could not create list');
-});
+})->RequiredData(['List']);
 
 /**
  * Get a specific list
  */
 $Router->Get('/lists/{id}', function($id) {
   $db = database();
+  $res = $db->query("SELECT ListData FROM lists WHERE Id=?", [
+    $id
+  ]);
 
-  $qryStr = sprintf("SELECT ListData FROM lists WHERE Id='%s' OR AutoID='%s'", $id, $id);
-  $qry = $db->query($qryStr);
-
-  $res = $qry->fetch_assoc();
   if ($res == null) {
     $this->Abort(404, 'Could not find list');
   }
 
+  // Should only ever be one result
+  $res = $res[0];
+
   // Convert from JSON to an object
   $list = json_decode($res['ListData']);
-
+  
   return $list;
 });
 
@@ -559,20 +576,17 @@ $Router->Post('/lists/{id}/edit', function($id) {
 
   // Update in the database
   $db = database();
-
-  $list = json_decode($this->Data['List']);
-
-  $qryStr = sprintf("UPDATE list SET ListData='%s' WHERE AutoId='%s' OR Id='%s'", json_encode($list), $id, $id);
-
-  $qrySuccess = $db->query($qryStr);
-
-  if ($qrySuccess) {
-    // Get the list
-    $list = $Router->RunLocal('GET', '/lists/'.$id);
-    if (!is_null($list) && isset($list->Data)) {
-      return json_decode($list->Data);
-    }
+  $res = $db->query("UPDATE list SET ListData=? WHERE Id=?", [
+    $this->Data['List'], 
+    $id
+  ]);
+  
+  // Get the updated list
+  $list = $Router->RunLocal('GET', '/lists/'.$id);
+  if (!is_null($list) && isset($list->Data)) {
+    return $list->Data;
   }
+  
 
   $this->Abort('204', 'Could not update list');
 })->RequiredData(['List']);

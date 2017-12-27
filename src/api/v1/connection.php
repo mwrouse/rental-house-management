@@ -64,6 +64,20 @@ function database() {
   if (!isset($connection)) {
     // Load config
     $cfg = parse_ini_file('../dbconfig.ini');
+
+    // Error if unable to read from dbconfig.ini file
+    if ($cfg == false) { 
+      throw new Exception('Could not read dbconfig.ini file'); 
+    }
+
+    // Verify that all keys exist
+    $requiredKeys = ['connection', 'username', 'password']; 
+    foreach ($requiredKeys as $key) { 
+      if (!array_key_exists($key, $cfg)) { 
+        throw new Exception("dbconfig.ini file is missing an etnry for '". $key . "'.");
+      }
+    }
+
     $connection = new DatabaseConnection($cfg['connection'], $cfg['username'], $cfg['password']);  #mysqli_connect($cfg['server'], $cfg['username'], $cfg['password'], $cfg['database']);
   }
 

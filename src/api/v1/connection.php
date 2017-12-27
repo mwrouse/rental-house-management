@@ -15,7 +15,12 @@ class DatabaseConnection {
    * @param Array   $options           Array of optional driver options
    */
   public function __construct($connectionString, $username, $password, $options=[]) { 
-    $this->_conn = new PDO($connectionString, $username, $password, $options); 
+    try {
+      $this->_conn = new PDO($connectionString, $username, $password, $options); 
+    }
+    catch (PDOException $e) { 
+      throw new Exception('Connection Failed: ' . $e->getMessage());
+    }
   }
 
 

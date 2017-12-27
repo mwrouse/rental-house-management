@@ -50,6 +50,15 @@ gulp.task('css', function() {
 
 
 /**
+ * Copies fonts
+ */
+gulp.task('fonts', function() {
+  return gulp.src('./src/styles/fonts/*.*')
+    .pipe(gulp.dest("./build/styles/fonts"));
+});
+
+
+/**
  * Compile TypeScript
  */
 gulp.task('typescript', function() {
@@ -62,4 +71,4 @@ gulp.task('typescript', function() {
 });
 
 
-gulp.task('default', ['html', 'php', 'javascript', 'less', 'css', 'typescript']);
+gulp.task('default', ['html', 'php', 'javascript', 'less', 'css', 'fonts', 'typescript']);

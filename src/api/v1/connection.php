@@ -15,7 +15,12 @@ class DatabaseConnection {
    * @param Array   $options           Array of optional driver options
    */
   public function __construct($connectionString, $username, $password, $options=[]) { 
-    $this->_conn = new PDO($connectionString, $username, $password, $options); 
+    try {
+      $this->_conn = new PDO($connectionString, $username, $password, $options); 
+    }
+    catch (PDOException $e) { 
+      throw new Exception('Connection Failed: ' . $e->getMessage());
+    }
   }
 
 
@@ -30,15 +35,21 @@ class DatabaseConnection {
     $statement = $this->_conn->prepare($qry); 
     $statement->execute($params); 
     
-    // Get the rows returned from the query
-    $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+    if ($statement->errorCode() == 0) {
+      // Get the rows returned from the query
+      $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-    // Return null if no rows were returned
-    if (count($rows) == 0) { 
-      return null; 
+      // Return null if no rows were returned
+      if (count($rows) == 0) { 
+        return null; 
+      }
+
+      return $rows;
     }
-
-    return $rows;
+    else { 
+      $errors = $statement->errorInfo();
+      throw new Exception($errors[2]); // Throw the error message
+    }
   }
 
 }
@@ -53,12 +64,22 @@ function database() {
   if (!isset($connection)) {
     // Load config
     $cfg = parse_ini_file('../dbconfig.ini');
-    $connection = new DatabaseConnection($cfg['connection'], $cfg['username'], $cfg['password']);  #mysqli_connect($cfg['server'], $cfg['username'], $cfg['password'], $cfg['database']);
-  }
 
-  if ($connection == false) {
-    // TODO
-    echo "WHOOPS";
+    // Error if unable to read from dbconfig.ini file
+    if ($cfg == false) { 
+      throw new Exception('Could not read dbconfig.ini file'); 
+    }
+
+    // Verify that all keys exist
+    $requiredKeys = ['connection', 'username', 'password']; 
+    foreach ($requiredKeys as $key) { 
+      if (!array_key_exists($key, $cfg)) { 
+        throw new Exception("dbconfig.ini file is missing an etnry for '". $key . "'.");
+      }
+    }
+
+    // Connect to the database using configuration information
+    $connection = new DatabaseConnection($cfg['connection'], $cfg['username'], $cfg['password']);
   }
 
   return $connection;

@@ -483,41 +483,100 @@ $Router->Post('/targets/{id}/edit', function($id) {
  * Get all the lists
  */
 $Router->Get('/lists', function() {
-  // TODO
+  global $Router;
+
+  $db = database();
+
+  $qry = $db->Query("SELECT Id FROM lists");
+
+  $lists = [];
+  while ($row = $qry->fetch_assoc()) {
+    $list = $Router->RunLocal('/lists/'.$row['Id']);
+    array_push($lists, $list->Data);
+  }
+
+  return $targets;
 });
 
 /**
  * Create a new list
  */
 $Router->Post('/lists/new', function() {
-  // TODO
+  global $Router;
+
+  $db = database();
+
+  $id = uuid();
+  $qryStr = sprintf("INSERT INTO lists (Id, ListData) VALUES ('%s', '%s')", $id, $this->Data['List']);
+  $qrySuccess = $db->query($qryStr);
+
+  // Verify the list was actually created
+  if ($qrySuccess) {
+    $url = sprintf('/lists/%s', $id);
+    $list = $Router->RunLocal('GET', $url);
+
+    if (!is_null($list) && isset($list->Data)) {
+      return $list->Data; // List Created
+    }
+  }
+
+  // Failed to create list
+  $this->Abort('204', 'Could not create list');
 });
 
 /**
  * Get a specific list
  */
 $Router->Get('/lists/{id}', function($id) {
-  // TODO
+  $db = database();
+
+  $qryStr = sprintf("SELECT ListData FROM lists WHERE Id='%s' OR AutoID='%s'", $id, $id);
+  $qry = $db->query($qryStr);
+
+  $res = $qry->fetch_assoc();
+  if ($res == null) {
+    $this->Abort(404, 'Could not find list');
+  }
+
+  // Convert from JSON to an object
+  $list = json_decode($res['ListData']);
+
+  return $list;
 });
 
 /**
  * Update the metadata about a list
  */
 $Router->Post('/lists/{id}/edit', function($id) {
-  // TODO
-});
+  global $Router;
 
-/**
- * Add something to a list
- */
-$Router->Post('/lists/{id}/add', function($id) {
-  // TODO
-});
+  // Verify that the list exists
+  $list = $Router->RunLocal('GET', '/lists/'.$id);
+  if (is_null($list) || !isset($list->Data)) {
+    $this->Abort('404', 'Invalid List');
+  }
+  $list = $list->Data;
 
-/**
- * Update an item on a list
- */
-#$Router->Posts('/lists/{id}/')
+  // Update in the database
+  $db = database();
+
+  $list = json_decode($this->Data['List']);
+
+  $qryStr = sprintf("UPDATE list SET ListData='%s' WHERE AutoId='%s' OR Id='%s'", json_encode($list), $id, $id);
+
+  $qrySuccess = $db->query($qryStr);
+
+  if ($qrySuccess) {
+    // Get the list
+    $list = $Router->RunLocal('GET', '/lists/'.$id);
+    if (!is_null($list) && isset($list->Data)) {
+      return json_decode($list->Data);
+    }
+  }
+
+  $this->Abort('204', 'Could not update list');
+})->RequiredData(['List']);
+
 
 
 

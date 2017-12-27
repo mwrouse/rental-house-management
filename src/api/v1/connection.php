@@ -30,15 +30,21 @@ class DatabaseConnection {
     $statement = $this->_conn->prepare($qry); 
     $statement->execute($params); 
     
-    // Get the rows returned from the query
-    $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+    if ($statement->errorCode() == 0) {
+      // Get the rows returned from the query
+      $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-    // Return null if no rows were returned
-    if (count($rows) == 0) { 
-      return null; 
+      // Return null if no rows were returned
+      if (count($rows) == 0) { 
+        return null; 
+      }
+
+      return $rows;
     }
-
-    return $rows;
+    else { 
+      $errors = $statement->errorInfo();
+      throw new Exception($errors[2]); // Throw the error message
+    }
   }
 
 }

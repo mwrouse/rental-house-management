@@ -78,12 +78,8 @@ function database() {
       }
     }
 
-    $connection = new DatabaseConnection($cfg['connection'], $cfg['username'], $cfg['password']);  #mysqli_connect($cfg['server'], $cfg['username'], $cfg['password'], $cfg['database']);
-  }
-
-  if ($connection == false) {
-    // TODO
-    echo "WHOOPS";
+    // Connect to the database using configuration information
+    $connection = new DatabaseConnection($cfg['connection'], $cfg['username'], $cfg['password']);
   }
 
   return $connection;

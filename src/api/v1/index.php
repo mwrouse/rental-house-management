@@ -95,7 +95,7 @@ $Router->Get('/bills/{id}', function($id) {
   $db = database();
   $res = $db->query("SELECT Id, Title, DueDate, Amount, CreatedBy, FullyPaid, PayTo FROM bills WHERE Id=?", [$id]);
   
-  if ($res == null)
+  if (is_null($res))
     $this->Abort(404, 'Could not find bill');
 
   // Only use the first item in the result (should only ever be one)
@@ -164,9 +164,8 @@ $Router->Get('/bills/{id}/payments/{id}', function($billId, $paymentId) {
     $paymentId
   ]);
 
-  if ($res == null) {
+  if (is_null($res))
     $this->Abort('404', 'Could not find payment');
-  }
 
   // Should only ever be one result
   $res = $res[0];
@@ -324,10 +323,9 @@ $Router->Get('/tenants/{id}', function($id) {
     $id
   ]);
 
-  if ($res == null) {
+  if (is_null($res))
     $this->Abort(404, 'Could not find tenant');
-  }
-
+  
   // Should only ever be one result
   $res = $res[0];
 
@@ -432,14 +430,14 @@ $Router->Get('/targets/{id}', function($id) {
     $id
   ]);
 
-  if ($res == null) {
+  if (is_null($res)) {
     // Check if id belongs to a tenant
     $tenant = $Router->RunLocal('GET', '/tenants/'.$id);
     if (!is_null($tenant) && isset($tenant->Data)) {
       // Convert to a target style object
       $tenant->Data['Url'] = null;
       $tenant->Data['IsTenant'] = true;
-      $tenant->Data['Archived'] = ($tenant->Data['EndDate'] == null) ? false : (strtotime($tenant->Data['EndDate']) <= strtotime("now")) ? true : false;
+      $tenant->Data['Archived'] = (is_null($tenant->Data['EndDate'])) ? false : (strtotime($tenant->Data['EndDate']) <= strtotime("now")) ? true : false;
 
       return $tenant->Data;
     }
@@ -548,9 +546,8 @@ $Router->Get('/lists/{id}', function($id) {
     $id
   ]);
 
-  if ($res == null) {
+  if (is_null($res))
     $this->Abort(404, 'Could not find list');
-  }
 
   // Should only ever be one result
   $res = $res[0];

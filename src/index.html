@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title></title>
+    <title>Bill Monitor</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,7 +21,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/" data-bind="text: Title"></a>
+          <a class="navbar-brand" href="/" data-bind="text: Config.SiteName"></a>
         </div>
 
         <!-- Navigation Sidebar --> 
@@ -29,17 +29,42 @@
           <div class="sidebar-nav navbar-collapse">
             <ul class="nav" id="side-menu">
               <li>
-                <a href="/"><i class="fa fa-dashboard fa-fw"></i> Home</a>
+                <a href="#"><i class="fa fa-dashboard"></i> Home</a>
               </li>
 
+              <li>
+                <a href="#bills"><i class="fa fa-money"></i> Bills</a>
+              </li>
+
+              <li>
+                <a href="#tenants"><i class="fa fa-users"></i> Tenants</a>
+              </li>
+
+              <li>
+                <a href="#recipients"><i class="fa fa-building"></i> Payment Recipients</a>
+              </li>
             </ul>
           </div>
         </div>
       </nav>
+
+
+      <div data-bind="page: {id: 'start', title: 'Meow'}">
+        Hey
+      </div>
+
+      <div data-bind="page: {id: 'bills', title: 'Bills'}">
+        Bills
+      </div>
+
+
+
+
     </div>
-    
-    <script src="scripts/lib/third_party.js"></script>
-    <script src="scripts/lib/sb-admin-2.js"></script>
+
+
+
+    <script src="scripts/lib/polyfills.js"></script>
     <script src="scripts/lib/require.js"  data-main="scripts/require-config"></script>
   </body>
 </html>

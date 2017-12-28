@@ -591,6 +591,34 @@ $Router->Post('/lists/{id}/edit', function($id) {
 
 
 
+/*****************************
+ *       Configuration       *
+ *****************************/
+
+/**
+ * Retrieves the configuration
+ */
+$Router->Get('/configuration', function() {
+  // Retrieve from the database
+  $db = database();
+  $res = $db->query("SELECT Value from object_store WHERE Name='config'");
+
+  if ($res == null) 
+    $this->Abort('404', 'Configuration not found');
+
+  $res = $res[0]; 
+
+  return $res; 
+});
+
+/**
+ * Updates the configuration
+ */
+$Router->Post('/configuration/update', function() {
+
+});
+
+
 
 
 

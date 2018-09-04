@@ -8,10 +8,13 @@ class Request {
     public $Uri;
     public $Data;
 
+    private $_statusCode;
+
     public function __construct($method, $uri, $data) {
       $this->Method = strtoupper($method);
       $this->Uri = $uri;
       $this->Data = $data;
+      $this->_statusCode = 200;
     }
 
     /**
@@ -36,10 +39,12 @@ class Request {
     public function Abort($code=200, $reason='') {
       try {
         http_response_code($code);
+        $this->_statusCode = $code;
       }
       catch (Exception $e) {
         // TODO
       }
+
       throw new Exception($reason);
     }
 
@@ -52,10 +57,29 @@ class Request {
     }
 
     /**
+     * Sets a response header
+     * @param string $name Header name
+     * @param string $value Header value
+     */
+    public function SetHeader($name, $value) {
+      header($name . ": " . $value);
+    }
+
+    /**
+     * Sets a response cookie
+     */
+    public function SetCookie($name, $value, $expiration = null, $path = "/", $secure = True, $httpOnly = False) {
+      if ($expiration == null)
+        $expiration = time() + (86400 * 30);
+
+      setcookie($name, $value, $expiration, $path, "", $secure, $httpOnly);
+    }
+
+    /**
      * Returns the object without POST/GET Data
      */
     public function Serialize() {
-      return (object) [ 'Method' => $this->Method, 'Uri' => $this->Uri ];
+      return (object) [ 'Method' => $this->Method, 'StatusCode' => $this->_statusCode, 'Uri' => $this->Uri ];
     }
 
 }
@@ -65,6 +89,8 @@ class Request {
  * Class that represents a route
  */
 class Route {
+  public $RequiresAuthentication = False;
+
   private $_path;
   private $_callback;
 
@@ -97,12 +123,19 @@ class Route {
   }
 
   /**
+   * Marks a request as requiring authentication
+   */
+  public function Authenticate() {
+    $this->RequiresAuthentication = True;
+  }
+
+  /**
    * Tries to run the endpoint when given a request
    *
    * @param Request $request The request that will become the callback $this
    * @return Value returned from callback (if endpoint matched)
    */
-  public function TryRun($request) {
+  public function TryRun($request, $authMethod) {
     if (!in_array($request->Method, $this->_methods)) {
       return null; // Method not supported
     }
@@ -121,6 +154,18 @@ class Route {
       try {
         $this->_verifyData($request);
 
+        // Verify that user is logged in if needed
+        if ($this->RequiresAuthentication) {
+          if ($authMethod == null)
+            return null;
+
+          $isAuthed = call_user_func(Closure::bind($authMethod, $request));
+
+          if ($isAuthed == False) {
+            $request->Abort('401', 'Not Logged In');
+          }
+        }
+
         // Perform the endpoint callback
         $callbackReturn = call_user_func_array(Closure::bind($this->_callback, $request), $args);
 
@@ -136,7 +181,6 @@ class Route {
 
     return null;
   }
-
 
   /**
    * Verify that all post/get data exists
@@ -194,25 +238,19 @@ class Router {
 
   private $_endpointFound;
 
-  public function __construct($base = '') {
-    if ($base != '') {
-      $this->SetBase($base);
-    }
+  private $_authenticationMethod;
+
+  public function __construct($base = '', $authMethod = null) {
+    $this->_base = $base;
+    $this->_authenticationMethod = $authMethod;
     $this->_endpointFound = false;
     $this->_request = $this->_generateRequestObject();
   }
 
 
   /**
-   * Sets the base of each route url
-   *
-   * @param string $base The url base of all routes
-   * @return void
+   * Returns the Base URI
    */
-  public function SetBase($base) {
-    $this->_base = $this->_normalizeEndpoint($base);
-  }
-
   public function GetBase() {
     return $this->_base;
   }
@@ -224,6 +262,15 @@ class Router {
    */
   public function SetParameters($definitions) {
     $this->_definitions = $definitions;
+    return $this;
+  }
+
+  /**
+   * Sets the authentication method for a router
+   */
+  public function SetAuthenticationMethod($func) {
+    $this->_authenticationMethod = $func;
+    return $this;
   }
 
   /**
@@ -270,7 +317,7 @@ class Router {
     $found = false;
 
     foreach ($this->_routes as $route) {
-      $ret = $route->TryRun($request);
+      $ret = $route->TryRun($request, $this->_authenticationMethod);
 
       if (!is_null($ret)) {
         $found = true;
@@ -291,7 +338,7 @@ class Router {
     $request = new Request(strtoupper($method), $this->_base . $this->_normalizeEndpoint($url), $postData);
 
     foreach ($this->_routes as $route) {
-      $ret = $route->TryRun($request);
+      $ret = $route->TryRun($request, $this->_authenticationMethod);
 
       if (!is_null($ret)) {
         $found = true;
@@ -301,6 +348,7 @@ class Router {
 
     return $ret;
   }
+
 
   /**
    * Generates the Request object that will become $this for the callback

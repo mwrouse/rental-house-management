@@ -2,6 +2,7 @@ interface IManifest {
     Title: string;
     NavIcon: string;
     Key: string;
+    DemandPermission?: string;
 }
 
 interface IModuleLoader {
@@ -21,6 +22,9 @@ interface ISystem {
     WhenReady: JQueryPromise<any>;
     Modules: IManifest[];
     Configuration: ISystemConfiguration;
+    CurrentUser: ITenant;
+
+    DoesUserHaveAccess(feature: string): boolean;
 }
 
 
@@ -37,7 +41,10 @@ interface ITenant {
     Id: string;
     FirstName: string;
     LastName: string;
+    Name: string;
+    AbbreviatedName: string;
     Username: string;
     StartDate: string;
     EndDate: string;
+    Permissions: string[];
 }

@@ -24,6 +24,7 @@ $Router->SetParameters([
 
 
 require_once('authentication.php');
+require_once('authorization.php');
 
 
 /*****************************
@@ -321,7 +322,7 @@ $Router->Post('/tenants/new', function() {
  */
 $Router->Get('/tenants/{id}', function($id) {
   $db = database();
-  $res = $db->query("SELECT Id, FirstName, LastName, StartDate, EndDate FROM tenants WHERE Id=?", [
+  $res = $db->query("SELECT Id, FirstName, LastName, StartDate, EndDate, Permissions FROM tenants WHERE Id=?", [
     $id
   ]);
 
@@ -334,6 +335,8 @@ $Router->Get('/tenants/{id}', function($id) {
   // Add computed values
   $res['Name'] = $res['FirstName'] . ' ' . $res['LastName'];
   $res['AbbreviatedName'] = $res['FirstName'] . ' ' . substr($res['LastName'], 0, 1) . '.';
+
+  $res['Permissions'] = explode(",", $res['Permissions']);
 
   return $res;
 });

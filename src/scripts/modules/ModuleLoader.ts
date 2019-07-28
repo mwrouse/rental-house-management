@@ -1,3 +1,5 @@
+var system: ISystem = require('system');
+
 let modules = [
     "bills",
     "tenants"

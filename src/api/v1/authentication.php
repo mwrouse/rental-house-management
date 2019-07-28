@@ -40,7 +40,7 @@ $Router->Get(AuthEndpoint('login'), function() {
 
     $db = database();
 
-    $result = $db->query("SELECT password FROM tenants WHERE username=?", [
+    $result = $db->query("SELECT Id, password FROM tenants WHERE username=?", [
         $this->Data['username']
       ]);
 
@@ -51,7 +51,7 @@ $Router->Get(AuthEndpoint('login'), function() {
     $access = password_verify($this->Data['password'], $hashed_pwd);
 
     if ($access)
-        $this->SetCookie($cookieName, $this->Data['username']);
+        $this->SetCookie($cookieName, $result[0]['Id']);
     else
         $this->RemoveCookie($cookieName);
 

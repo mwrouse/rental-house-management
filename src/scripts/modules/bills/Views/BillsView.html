@@ -1,14 +1,14 @@
 <div id="BillsView" data-bind="block: IsLoading">
-    <h1>Bills</h1>
+    <h1 class="h1 mb-2 text-gray-800">Bills</h1>
 
     <div class="row">
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
+            <div class="card border-left-primary shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                 <div class="col mr-2">
-                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Bill Amount</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800" data-bind="text: TotalBillCost"></div>
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Bill Amount</div>
+                    <div class="h3 mb-0 font-weight-bold text-gray-800" data-bind="text: TotalBillCost"></div>
                 </div>
                 <div class="col-auto">
                     <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -19,25 +19,62 @@
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Due Soon (&lt;3 days)</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" data-bind="text: BillsDueSoon"></div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                    </div>
-                    </div>
+            <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Due Soon (&lt;3 days)</div>
+                    <div class="h3 mb-0 font-weight-bold text-gray-800" data-bind="text: BillsDueSoon"></div>
+                </div>
+                <div class="col-auto">
+                    <i class="fas fa-calendar fa-2x text-gray-300"></i>
                 </div>
                 </div>
             </div>
+            </div>
+        </div>
 
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Over Due</div>
+                    <div class="h3 mb-0 font-weight-bold text-gray-800" data-bind="text: OverDueBills"></div>
+                </div>
+                <div class="col-auto">
+                    <i class="fas fa-exclamation-circle fa-2x text-gray-300"></i>
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
     </div>
 
-    <div class="row" data-bind="foreach: Bills">
-        <div data-bind="text: Title"></div>
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <button type="button" class="btn btn-success">
+                <i class="fas fa-plus"></i> New Bill
+            </button>
+        </div>
+    </div>
 
+    <div class="table-responsive">
+        <table class="table table-bordered" id="billsTable" width="100%" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>Bill</th>
+                    <th>Due Date</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: Bills">
+                <tr data-bind="attr: { class: $parent.GetBillRowClass($data) }">
+                    <td data-bind="text: Title"></td>
+                    <td data-bind="text: DueDate"></td>
+                    <td data-bind="text: $parent.GetBillAmount($data)"></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>

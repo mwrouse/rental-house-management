@@ -20,11 +20,11 @@ require.config({
 });
 
 // Require everything
-require(['knockout', 'jquery', 'fontawesome'], (ko, vm, jQuery) => {
+require(['knockout', 'jquery', 'fontawesome', 'system'], (ko, vm, jQuery) => {
   require(['jqueryui', 'hashchange', 'metisMenu'], () => {
     require(['pager', 'sbadmin', 'jqueryblockui'], (pager, metisMenu, sbadmin) => {
 
-      require(['system', 'moduleView', 'lib/bindings/block'], (system: ISystem) => {
+      require(['moduleView', 'lib/bindings/block'], (system: ISystem) => {
         system.WhenReady.then(() => {
           require(['viewmodels/BaseViewModel'], (vm) => {
             let viewModel = new vm();

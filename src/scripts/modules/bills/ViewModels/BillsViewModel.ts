@@ -1,0 +1,5 @@
+class BillsViewModel {
+
+}
+
+export = BillsViewModel;

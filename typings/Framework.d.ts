@@ -2,7 +2,10 @@ interface IManifest {
     Title: string;
     NavIcon: string;
     Key: string;
-    DefaultArea: string;
+}
+
+interface IPartialView {
+
 }
 
 interface IModuleLoader {
@@ -10,5 +13,6 @@ interface IModuleLoader {
 }
 
 interface IViewModel {
-
+    OnLoad(): void;
+    OnHide(): void;
 }

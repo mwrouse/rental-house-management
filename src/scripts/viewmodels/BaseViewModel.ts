@@ -11,9 +11,16 @@ import Configuration = require("models/Configuration");
 class BaseViewModel {
     public Config: IConfiguration = Configuration;
 
-    constructor() {
+    public ActiveModule: KnockoutObservable<IManifest>;
 
+    constructor() {
+        this.ActiveModule = ko.observable(null);
     }
+
+
+    public ChangeView = (manifest: IManifest) => {
+        this.ActiveModule(manifest);
+    };
 
     public _changeViewModel() {
         /*let hash = window.location.hash;

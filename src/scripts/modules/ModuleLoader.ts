@@ -2,16 +2,11 @@ let modules = [
     "bills",
     "tenants"
 ];
-//import BillsManifest = require("./bills/manifest");
-//import TenantsManifest = require("./tenants/manifest");
-
 
 class ModuleLoader implements IModuleLoader {
     private manifests: IManifest[] = [];
 
     constructor(){
-        //this.manifests.push(BillsManifest);
-        //this.manifests.push(TenantsManifest);
     }
 
     public GetModules(): JQueryPromise<IManifest[]> {

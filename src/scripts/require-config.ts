@@ -10,7 +10,8 @@ require.config({
     jquery: 'lib/jquery',
     metisMenu: 'lib/metisMenu',
     hashchange: 'lib/jquery-hashchange',
-    sbadmin: 'lib/sb-admin-2'
+    sbadmin: 'lib/sb-admin-2',
+    moduleView: 'lib/bindings/moduleView',
   }
 });
 
@@ -36,14 +37,17 @@ if (urlParts.length > 1) {
 require(['knockout', 'jquery'], (ko, vm, jQuery) => {
   require(['hashchange', 'metisMenu'], () => {
     require(['pager', 'sbadmin'], (pager, metisMenu, sbadmin) => {
-      require(['viewmodels/BaseViewModel'], (vm) => {
-        let viewModel = new vm();
 
-        pager.Href.hash = '#!/';
-        pager.extendWithPage(viewModel);
+      require(['moduleView'], () => {
+        require(['viewmodels/BaseViewModel'], (vm) => {
+          let viewModel = new vm();
 
-        ko.applyBindings(viewModel);
-        pager.start();
+          pager.Href.hash = '#!/';
+          pager.extendWithPage(viewModel);
+
+          ko.applyBindings(viewModel);
+          pager.start();
+        });
       });
     });
   });

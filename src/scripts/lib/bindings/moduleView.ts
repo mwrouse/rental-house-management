@@ -1,8 +1,5 @@
 import * as ko from "knockout";
 
-var system: ISystem = require('system');
-
-
 let conventions = {
     buildViewName: key => key + 'View.html',
     buildViewPath: function(key, name){ return 'scripts/modules/' + key + '/Views/' + this.buildViewName(name); },
@@ -81,12 +78,6 @@ ko.bindingHandlers['moduleView'] = {
 
         let moduleVMPath = conventions.buildViewModelPath(area, manifest.Title);
         let moduleViewPath = conventions.buildViewPath(area, manifest.Title);
-
-        if (manifest.DemandPermission)
-        {
-            if (!system.DoesUserHaveAccess(manifest.DemandPermission))
-                return; // No access
-        }
 
         loadView(moduleViewPath, manifest)
             .done((view) => {

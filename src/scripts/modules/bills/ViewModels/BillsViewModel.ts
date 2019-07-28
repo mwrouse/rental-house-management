@@ -1,5 +1,5 @@
 import * as ko from "knockout";
-
+var system = require('system');
 
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -7,8 +7,8 @@ function numberWithCommas(x) {
 
 class BillsViewModel {
     public IsLoading: KnockoutObservable<boolean> = ko.observable(true);
-
     public Bills: KnockoutObservableArray<IBill> = ko.observableArray([]);
+    public System: ISystem = system;
 
 
     constructor() {

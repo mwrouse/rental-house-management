@@ -38,7 +38,7 @@ class Request {
     /**
      * Aborts a response with a code
      */
-    public function Abort($code=200, $reason='') {
+    public function Abort($code=200, $reason='', $exception=True) {
       try {
         http_response_code($code);
         $this->_statusCode = $code;
@@ -46,8 +46,8 @@ class Request {
       catch (Exception $e) {
         // TODO
       }
-
-      throw new Exception($reason);
+      if ($exception)
+        throw new Exception($reason);
     }
 
     /**
@@ -116,6 +116,8 @@ class Route {
   private $_requiredData = [];
   private $_originalPath = '';
 
+  private $_requiredPermissions = [];
+
   public function __construct($methods, $path, $fn, $argDefinitions = []) {
     $this->_methods = $methods;
     $this->_originalPath = $path;
@@ -137,11 +139,26 @@ class Route {
     return $this;
   }
 
+   /**
+   * Sets the required permissions needed to access an endpoint
+   */
+  public function RequiredPermissions($data) {
+    if (!is_array($data)) {
+      array_push($this->_requiredPermissions, $data);
+    }
+    else {
+      $this->_requiredPermissions = array_merge($this->_requiredPermissions, $data);
+    }
+
+    return $this;
+  }
+
   /**
    * Marks a request as requiring authentication
    */
   public function Authenticate() {
     $this->RequiresAuthentication = True;
+    return $this;
   }
 
   /**
@@ -150,7 +167,7 @@ class Route {
    * @param Request $request The request that will become the callback $this
    * @return Value returned from callback (if endpoint matched)
    */
-  public function TryRun($request, $authMethod) {
+  public function TryRun($request, $authMethod, $permissions = '') {
     if (!in_array($request->Method, $this->_methods)) {
       return null; // Method not supported
     }
@@ -181,6 +198,22 @@ class Route {
           if ($isAuthed == False) {
             $request->Abort(401, 'Not Logged In');
             return null;
+          }
+
+          // Check permissions
+          if (!is_null($permissions)) {
+            $permissions = explode(",", $permissions);
+            if (count($this->_requiredPermissions) > 0) {
+              $matches = 0;
+              foreach ($this->_requiredPermissions as $permission) {
+                if (in_array($permission, $permissions))
+                  $matches = $matches + 1;
+              }
+              if ($matches != count($this->_requiredPermissions))
+              {
+                $request->Abort(401, 'Invalid Permissions');
+              }
+            }
           }
         }
 
@@ -265,7 +298,6 @@ class Router {
     $this->_request = $this->_generateRequestObject();
   }
 
-
   /**
    * Produces a new Child Router, which extends this one
    */
@@ -344,7 +376,7 @@ class Router {
     $found = false;
 
     foreach ($this->_routes as $route) {
-      $ret = $route->TryRun($request, $this->_authenticationMethod);
+      $ret = $route->TryRun($request, $this->_authenticationMethod, $_COOKIE['user_permissions']);
 
       if (!is_null($ret)) {
         $found = true;
@@ -375,7 +407,7 @@ class Router {
     $request = new Request(strtoupper($method), $this->_base . $this->_normalizeEndpoint($url), $postData);
 
     foreach ($this->_routes as $route) {
-      $ret = $route->TryRun($request, $this->_authenticationMethod);
+      $ret = $route->TryRun($request, $this->_authenticationMethod, $_COOKIE['user_permissions']);
 
       if (!is_null($ret)) {
         $found = true;

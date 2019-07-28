@@ -5,13 +5,13 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="styles/main.css">
     <link rel="stylesheet" type="text/css" href="styles/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="styles/font-awesome.css">
+    <link rel="stylesheet" type="text/css" href="styles/main.css">
   </head>
   <body>
     <div id="wrapper">
-      <!-- Navigation --> 
+      <!-- Navigation -->
       <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom:0">
         <!-- Navigation Header -->
         <div class="navbar-header">
@@ -21,42 +21,56 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/" data-bind="text: Config.SiteName"></a>
+          <a class="navbar-brand" href="#" data-bind="text: Config.SiteName"></a>
         </div>
 
-        <!-- Navigation Sidebar --> 
+        <!-- Navigation Sidebar -->
         <div class="navbar-default sidebar" role="navigation">
           <div class="sidebar-nav navbar-collapse">
             <ul class="nav" id="side-menu">
               <li>
-                <a href="#"><i class="fa fa-dashboard"></i> Home</a>
+                <a href="#!/bills"><i class="fa fa-money"></i> Bills</a>
               </li>
 
               <li>
-                <a href="#bills"><i class="fa fa-money"></i> Bills</a>
+                <a href="#!/tenants"><i class="fa fa-users"></i> Tenants</a>
               </li>
 
               <li>
-                <a href="#tenants"><i class="fa fa-users"></i> Tenants</a>
+                  <a href="#!/lists"><i class="fa fa-list"></i> Lists</a>
               </li>
 
               <li>
-                <a href="#recipients"><i class="fa fa-building"></i> Payment Recipients</a>
+                <a href="#!/recipients"><i class="fa fa-bank"></i> Payment Recipients</a>
               </li>
             </ul>
           </div>
         </div>
       </nav>
 
+      <div id="page-wrapper">
 
-      <div data-bind="page: {id: 'start', title: 'Meow'}">
-        Hey
-      </div>
+        <div data-bind="page: {id:'start', title: 'Loading'}">
+          Loading...
+        </div>
 
-      <div data-bind="page: {id: 'bills', title: 'Bills'}">
-        Bills
-      </div>
+        <div data-bind="page: {id: 'bills', title: 'Bills'}" style="display: none">
+          Bills
+        </div>
 
+        <div data-bind="page: {id: 'tenants', title: 'Tenants'} " style="display: none">
+          Tenants
+        </div>
+
+        <div data-bind="page: {id: 'recipients', title: 'Recipients'} " style="display: none">
+          Recipients
+        </div>
+
+        <div data-bind="page: {id: 'lists', title: 'Lists'} " style="display: none">
+            Lists
+        </div>
+
+    </div>
 
 
 

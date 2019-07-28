@@ -23,6 +23,8 @@ $Router->SetParameters([
 
 
 
+require_once('authentication.php');
+
 
 /*****************************
  *           BILLS           *
@@ -67,11 +69,11 @@ $Router->Post('/bills/new', function() {
   // Tenant exists, create the bill
   $db = database();
   $result = $db->query("INSERT INTO bills (Id, Title, DueDate, CreatedBy, Amount, PayTo) VALUES (?, ?, ?, ?, ?, ?)", [
-    $id, 
-    $this->Data['Title'], 
-    $this->Data['DueDate'], 
-    $tenant->Data['Id'], 
-    $this->Data['Amount'], 
+    $id,
+    $this->Data['Title'],
+    $this->Data['DueDate'],
+    $tenant->Data['Id'],
+    $this->Data['Amount'],
     $this->Data['PayTo']
   ]);
 
@@ -94,7 +96,7 @@ $Router->Get('/bills/{id}', function($id) {
 
   $db = database();
   $res = $db->query("SELECT Id, Title, DueDate, Amount, CreatedBy, FullyPaid, PayTo FROM bills WHERE Id=?", [$id]);
-  
+
   if (is_null($res))
     $this->Abort(404, 'Could not find bill');
 
@@ -206,10 +208,10 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
 
   // Add to the database
   $db = database();
-  $qry = $db->query("INSERT INTO payments (Id, BillId, Paidby, Amount, PaidInFull) VALUES (?, ?, ?, ?, ?)", [
-    $newId, 
-    $bill['Id'], 
-    $tenant['Id'], 
+  $qry = $db->query("INSERT INTO payments (Id, BillId, PaidBy, Amount, PaidInFull) VALUES (?, ?, ?, ?, ?)", [
+    $newId,
+    $bill['Id'],
+    $tenant['Id'],
     $this->Data['Amount'],
     $this->Data['PaidInFull']
   ]);
@@ -221,7 +223,7 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
     // TODO: Handle the bill being paid in full
     return $payment->Data;
   }
-  
+
   $this->Abort('204', 'Could not add payment');
 })->RequiredData(['TenantId', 'Amount', 'PaidInFull']);
 
@@ -241,9 +243,9 @@ $Router->Post('/bills/{id}/edit', function($id) {
   // Update the bill
   $db = database();
   $res = $db->query("UPDATE bills SET Title=?, DueDate=?, Amount=? WHERE Id=?", [
-    $this->Data['Title'], 
-    $this->Data['DueDate'], 
-    $this->Data['Amount'], 
+    $this->Data['Title'],
+    $this->Data['DueDate'],
+    $this->Data['Amount'],
     $bill['Id']
   ]);
 
@@ -252,7 +254,7 @@ $Router->Post('/bills/{id}/edit', function($id) {
   if (!is_null($bill) && isset($bill->Data)) {
     return $bill->Data;
   }
- 
+
   $this->Abort('204', 'Could not update bill');
 })->RequiredData(['Title', 'DueDate', 'Amount']);
 
@@ -290,14 +292,14 @@ $Router->Post('/tenants/new', function() {
 
   // TODO: Verfy StartDate is an actual date
 
-  $id = uuid(); // Id for the new tenant 
+  $id = uuid(); // Id for the new tenant
 
   // Create the tenant
   $db = database();
   $res = $db->query("INSERT INTO tenants (Id, FirstName, LastName, StartDate) VALUES (?, ?, ?, ?)", [
-    $id, 
-    $this->Data['FirstName'], 
-    $this->Data['LastName'], 
+    $id,
+    $this->Data['FirstName'],
+    $this->Data['LastName'],
     $this->Data['StartDate']
   ]);
 
@@ -309,7 +311,7 @@ $Router->Post('/tenants/new', function() {
   if (!is_null($tenant) && isset($tenant->Data)) {
     return $tenant->Data; // Tenant Created
   }
-  
+
   // Failed to create tenant
   $this->Abort('204', 'Could not create tenant');
 })->RequiredData(['FirstName', 'LastName', 'StartDate']);
@@ -325,7 +327,7 @@ $Router->Get('/tenants/{id}', function($id) {
 
   if (is_null($res))
     $this->Abort(404, 'Could not find tenant');
-  
+
   // Should only ever be one result
   $res = $res[0];
 
@@ -352,10 +354,10 @@ $Router->Post('/tenants/{id}/edit', function($id) {
   // Update in the database
   $db = database();
   $res = $db->query("UPDATE tenants SET FirstName=?, LastName=?, StartDate=?, EndDate=? WHERE Id=?", [
-    $this->Data['FirstName'], 
-    $this->Data['LastName'], 
-    $this->Data['StartDate'], 
-    (array_key_exists('EndDate', $this->Data)) ? $this->Data['EndDate'] : null, 
+    $this->Data['FirstName'],
+    $this->Data['LastName'],
+    $this->Data['StartDate'],
+    (array_key_exists('EndDate', $this->Data)) ? $this->Data['EndDate'] : null,
     $tenant['Id']
   ]);
 
@@ -364,7 +366,7 @@ $Router->Post('/tenants/{id}/edit', function($id) {
   if (!is_null($tenant) && isset($tenant->Data)) {
     return $tenant->Data;
   }
-  
+
   $this->Abort('204', 'Could not update tenant');
 })->RequiredData(['FirstName', 'LastName', 'StartDate']);
 
@@ -404,8 +406,8 @@ $Router->Post('/targets/new', function() {
 
   $db = database();
   $res = $db->query("INSERT INTO payment_targets (Id, Name, Url) VALUES (?, ?, ?)", [
-    $id, 
-    $this->Data['Name'], 
+    $id,
+    $this->Data['Name'],
     $this->Data['Url']
   ]);
 
@@ -414,7 +416,7 @@ $Router->Post('/targets/new', function() {
   if (!is_null($target) && isset($target->Data)) {
     return $target->Data;
   }
-  
+
   // Target not created
   $this->Abort('204', 'Could not create target');
 })->RequiredData(['Name', 'Url']);
@@ -445,7 +447,7 @@ $Router->Get('/targets/{id}', function($id) {
     // Does not belong to a tenant
     $this->Abort('404', 'Could not find Payment Target');
   }
-  
+
   $res = $res[0]; // Should only ever be on e
 
   $res['IsTenant'] = false;
@@ -471,9 +473,9 @@ $Router->Post('/targets/{id}/edit', function($id) {
   // Update
   $db = database();
   $res = $db->query("UPDATE payment_targets SET Name=?, Url=?, Archived=? WHERE Id=?", [
-    $this->Data['Name'], 
-    $this->Data['Url'], 
-    $this->Data['Archived'], 
+    $this->Data['Name'],
+    $this->Data['Url'],
+    $this->Data['Archived'],
     $id
   ]);
 
@@ -482,7 +484,7 @@ $Router->Post('/targets/{id}/edit', function($id) {
   if (!is_null($target) && isset($target->Data)) {
     return $target->Data;
   }
-  
+
   // Could not update
   $this->Abort('204', 'Could not update Payment Target');
 })->RequiredData(['Name', 'Url', 'Archived']);
@@ -500,7 +502,7 @@ $Router->Get('/lists', function() {
   global $Router;
 
   $db = database();
-  $rows = $db->query("SELECT Id FROM lists"); 
+  $rows = $db->query("SELECT Id FROM lists");
 
   $lists = [];
   foreach ($rows as $row) {
@@ -517,11 +519,11 @@ $Router->Get('/lists', function() {
 $Router->Post('/lists/new', function() {
   global $Router;
 
-  $id = uuid(); // Id for the new row 
+  $id = uuid(); // Id for the new row
 
   $db = database();
   $res = $db->query("INSERT INTO lists (Id, ListData) VALUES (?, ?)", [
-    $id, 
+    $id,
     $this->Data['List']
   ]);
 
@@ -554,7 +556,7 @@ $Router->Get('/lists/{id}', function($id) {
 
   // Convert from JSON to an object
   $list = json_decode($res['ListData']);
-  
+
   return $list;
 });
 
@@ -574,16 +576,16 @@ $Router->Post('/lists/{id}/edit', function($id) {
   // Update in the database
   $db = database();
   $res = $db->query("UPDATE list SET ListData=? WHERE Id=?", [
-    $this->Data['List'], 
+    $this->Data['List'],
     $id
   ]);
-  
+
   // Get the updated list
   $list = $Router->RunLocal('GET', '/lists/'.$id);
   if (!is_null($list) && isset($list->Data)) {
     return $list->Data;
   }
-  
+
 
   $this->Abort('204', 'Could not update list');
 })->RequiredData(['List']);
@@ -603,12 +605,12 @@ $Router->Get('/configuration', function() {
   $db = database();
   $res = $db->query("SELECT Value from object_store WHERE Name='config'");
 
-  if ($res == null) 
+  if ($res == null)
     $this->Abort('404', 'Configuration not found');
 
-  $res = $res[0]; 
+  $res = $res[0];
 
-  return $res; 
+  return $res;
 });
 
 /**

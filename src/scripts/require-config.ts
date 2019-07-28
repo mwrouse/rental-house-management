@@ -5,11 +5,11 @@
 require.config({
   baseUrl: "scripts",
   paths: {
-    knockout: 'lib/knockout', 
+    knockout: 'lib/knockout',
     pager: 'lib/pager',
-    jquery: 'lib/jquery', 
-    metisMenu: 'lib/metisMenu', 
-    hashchange: 'lib/jquery-hashchange', 
+    jquery: 'lib/jquery',
+    metisMenu: 'lib/metisMenu',
+    hashchange: 'lib/jquery-hashchange',
     sbadmin: 'lib/sb-admin-2'
   }
 });
@@ -24,6 +24,7 @@ if (urlParts.length > 1) {
     case "new":
       viewModel = "NewBill";
       break;
+
     case "payement":
       viewModel = "NewPayment";
       break;
@@ -36,9 +37,9 @@ require(['knockout', 'jquery'], (ko, vm, jQuery) => {
   require(['hashchange', 'metisMenu'], () => {
     require(['pager', 'sbadmin'], (pager, metisMenu, sbadmin) => {
       require(['viewmodels/BaseViewModel'], (vm) => {
-        let viewModel = new vm(); 
+        let viewModel = new vm();
 
-        pager.Href.hash = '#';
+        pager.Href.hash = '#!/';
         pager.extendWithPage(viewModel);
 
         ko.applyBindings(viewModel);

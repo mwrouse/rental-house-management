@@ -1,19 +1,25 @@
 import * as ko from "knockout";
 
-import Configuration from "models/Configuration";
+import Configuration = require("models/Configuration");
 
 
 /**
- * This is the base view model, it will load configuration from 
- * the database as well as contain access to the actual view model 
+ * This is the base view model, it will load configuration from
+ * the database as well as contain access to the actual view model
  * (for the bills page, history page, etc...)
  */
-class BaseViewModel { 
-    public Config: IConfiguration = new Configuration();
+class BaseViewModel {
+    public Config: IConfiguration = Configuration;
 
+    constructor() {
 
-    constructor() { 
-        
+    }
+
+    public _changeViewModel() {
+        /*let hash = window.location.hash;
+        if (hash == "") {
+            this.ViewModel = HomeViewModel_1.default;
+        }*/
     }
 }
 

@@ -9,10 +9,12 @@ class Request {
     public $Data;
 
     private $_statusCode;
+    private $_base;
 
-    public function __construct($method, $uri, $data) {
+    public function __construct($method, $uri, $baseUri, $data) {
       $this->Method = strtoupper($method);
       $this->Uri = $uri;
+      $this->_base = $baseUri;
       $this->Data = $data;
       $this->_statusCode = 200;
     }
@@ -54,6 +56,7 @@ class Request {
      */
     public function Redirect($location) {
       header("Location: " . $location);
+      return $this;
     }
 
     /**
@@ -63,16 +66,28 @@ class Request {
      */
     public function SetHeader($name, $value) {
       header($name . ": " . $value);
+      return $this;
     }
 
     /**
      * Sets a response cookie
      */
-    public function SetCookie($name, $value, $expiration = null, $path = "/", $secure = True, $httpOnly = False) {
+    public function SetCookie($name, $value, $expiration = null) {
       if ($expiration == null)
         $expiration = time() + (86400 * 30);
 
-      setcookie($name, $value, $expiration, $path, "", $secure, $httpOnly);
+      setcookie($name, $value, $expiration, "/", $_SERVER['SERVER_NAME'], True, True);
+      $_COOKIE[$name] = $value;
+      return $this;
+    }
+
+    /**
+     * Removes a cookie
+     */
+    public function RemoveCookie($name) {
+      unset($_COOKIE[$name]);
+      setcookie($name, null, -1, "/", $_SERVER['SERVER_NAME'], True, True);
+      return $this;
     }
 
     /**
@@ -156,13 +171,16 @@ class Route {
 
         // Verify that user is logged in if needed
         if ($this->RequiresAuthentication) {
-          if ($authMethod == null)
+          if ($authMethod == null) {
+            $request->Abort(500, 'No Authentication Method');
             return null;
+          }
 
           $isAuthed = call_user_func(Closure::bind($authMethod, $request));
 
           if ($isAuthed == False) {
-            $request->Abort('401', 'Not Logged In');
+            $request->Abort(401, 'Not Logged In');
+            return null;
           }
         }
 
@@ -188,7 +206,7 @@ class Route {
   private function _verifyData($request) {
     foreach ($this->_requiredData as $data) {
       if (!isset($request->Data[$data]) || empty($request->Data[$data])) {
-        $request->Abort('400', 'Invalid Request');
+        $request->Abort(400, 'Invalid Request');
       }
     }
   }
@@ -241,10 +259,19 @@ class Router {
   private $_authenticationMethod;
 
   public function __construct($base = '', $authMethod = null) {
-    $this->_base = $base;
+    $this->_base = $this->_normalizeEndpoint($base);
     $this->_authenticationMethod = $authMethod;
     $this->_endpointFound = false;
     $this->_request = $this->_generateRequestObject();
+  }
+
+
+  /**
+   * Produces a new Child Router, which extends this one
+   */
+  public function NewChildRouter($base) {
+    $newBase = $this->_normalizeEndpoint($this->_base + $base);
+    return new Router($newBase, null);
   }
 
 
@@ -325,6 +352,16 @@ class Router {
       }
     }
 
+    // Return error info if no matching endpoint was found
+    if (!$found) {
+      try {
+        $request->Abort(404, 'No Matching Endpoint');
+      }
+      catch (Exception $e) {
+        $ret = (object) ['Data' => null, 'Error' => $e->getMessage(), 'Request' => $request->Serialize()];
+      }
+    }
+
     echo json_encode($ret);
   }
 
@@ -358,7 +395,7 @@ class Router {
     $method = $_SERVER['REQUEST_METHOD'];
     $url = explode('?', $_SERVER['REQUEST_URI'])[0];
 
-    return new Request($method, $url, array_merge($_POST, $_GET));
+    return new Request($method, $url, $this->_base, array_merge($_POST, $_GET));
   }
 
   /**

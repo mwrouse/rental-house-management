@@ -43,7 +43,7 @@ gulp.task('less', function() {
 /**
  * Copies CSS
  */
-gulp.task('css', function() { 
+gulp.task('css', function() {
   return gulp.src('./src/styles/**/*.css')
     .pipe(gulp.dest("./build/styles"));
 });
@@ -64,11 +64,11 @@ gulp.task('fonts', function() {
 gulp.task('typescript', function() {
   var project = ts.createProject('tsconfig.json');
 
-  var result = gulp.src(['./src/scripts/**/*.ts', './typings/**/*.d.ts'])
+  var result = gulp.src(['./src/**/*.ts', './typings/**/*.d.ts'])
     .pipe(project());
 
-  return result.js.pipe(gulp.dest("./build/scripts"));
+  return result.js.pipe(gulp.dest("./build/"));
 });
 
 
-gulp.task('default', ['html', 'php', 'javascript', 'less', 'css', 'fonts', 'typescript']);
+gulp.task('default', gulp.series('html', 'php', 'javascript', 'less', 'css', 'fonts', 'typescript'));

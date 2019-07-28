@@ -70,7 +70,7 @@ function loadView(path: string, data: IManifest): JQueryPromise<string> {
 
 
 ko.bindingHandlers['moduleView'] = {
-    init: (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) => {
+    update: (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) => {
         let manifest: IManifest = ko.unwrap(valueAccessor());
         if (manifest == null)
             return;

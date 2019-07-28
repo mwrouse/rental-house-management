@@ -1,6 +1,6 @@
 let manifest: IManifest = {
     Title: "Bills",
-    NavIcon: "fa-money",
+    NavIcon: "fa-dollar-sign",
     Key: "bills",
 };
 

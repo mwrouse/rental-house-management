@@ -13,13 +13,14 @@ require.config({
     metisMenu: 'lib/metisMenu',
     hashchange: 'lib/jquery-hashchange',
     sbadmin: 'lib/sb-admin-2',
+    fontawesome: 'lib/fontawesome',
     moduleView: 'lib/bindings/moduleView',
     system: 'framework/system',
   }
 });
 
 // Require everything
-require(['knockout', 'jquery'], (ko, vm, jQuery) => {
+require(['knockout', 'jquery', 'fontawesome'], (ko, vm, jQuery) => {
   require(['jqueryui', 'hashchange', 'metisMenu'], () => {
     require(['pager', 'sbadmin', 'jqueryblockui'], (pager, metisMenu, sbadmin) => {
 

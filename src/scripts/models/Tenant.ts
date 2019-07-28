@@ -1,4 +1,4 @@
-class Tenant implements ITenant {
+class Tenant {
   public Id: Guid;
   public FirstName: String;
   public LastName: String;

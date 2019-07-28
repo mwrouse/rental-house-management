@@ -1,5 +1,5 @@
 import * as ko from "knockout";
-var system = require('system');
+var system: ISystem = require('system');
 
 /**
  * This is the base view model, it will load configuration from
@@ -11,8 +11,11 @@ class BaseViewModel {
 
     public ActiveModule: KnockoutObservable<IManifest>;
 
+    public IsLoading: KnockoutObservable<boolean> = ko.observable(true);
+
     constructor() {
-        this.ActiveModule = ko.observable(null);
+        this.ActiveModule = ko.observable(this.System.Modules[0]);
+        this.IsLoading(false);
     }
 
 

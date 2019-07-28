@@ -1,4 +1,4 @@
-class Bill implements IBill {
+class Bill  {
   public Id: Guid;
   public Title: String;
   public DueDate: Date;

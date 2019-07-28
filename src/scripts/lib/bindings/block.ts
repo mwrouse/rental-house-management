@@ -19,6 +19,9 @@ var $blockElement = $(blockElement);
 ko.bindingHandlers['block'] = {
     update: (element, valueAccessor, allBindingsAccessor, viewModel) => {
         var status = ko.unwrap(valueAccessor());
+        if (status == null || status == undefined)
+            status = true;
+
         var target = $(element);
 
         if (status) {

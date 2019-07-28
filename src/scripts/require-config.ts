@@ -12,6 +12,7 @@ require.config({
     hashchange: 'lib/jquery-hashchange',
     sbadmin: 'lib/sb-admin-2',
     moduleView: 'lib/bindings/moduleView',
+    system: 'framework/system',
   }
 });
 
@@ -38,17 +39,20 @@ require(['knockout', 'jquery'], (ko, vm, jQuery) => {
   require(['hashchange', 'metisMenu'], () => {
     require(['pager', 'sbadmin'], (pager, metisMenu, sbadmin) => {
 
-      require(['moduleView'], () => {
-        require(['viewmodels/BaseViewModel'], (vm) => {
-          let viewModel = new vm();
+      require(['system', 'moduleView'], (system: ISystem) => {
+        system.WhenReady.then(() => {
+          require(['viewmodels/BaseViewModel'], (vm) => {
+            let viewModel = new vm();
 
-          pager.Href.hash = '#!/';
-          pager.extendWithPage(viewModel);
+            pager.Href.hash = '#!/';
+            pager.extendWithPage(viewModel);
 
-          ko.applyBindings(viewModel);
-          pager.start();
+            ko.applyBindings(viewModel);
+            pager.start();
+          });
         });
       });
+
     });
   });
 });

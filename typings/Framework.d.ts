@@ -4,10 +4,6 @@ interface IManifest {
     Key: string;
 }
 
-interface IPartialView {
-
-}
-
 interface IModuleLoader {
     GetModules(): JQueryPromise<IManifest[]>;
 }
@@ -15,4 +11,14 @@ interface IModuleLoader {
 interface IViewModel {
     OnLoad(): void;
     OnHide(): void;
+}
+
+interface ISystemConfiguration {
+    SiteName: string;
+}
+
+interface ISystem {
+    WhenReady: JQueryPromise<any>;
+    Modules: IManifest[];
+    Configuration: ISystemConfiguration;
 }

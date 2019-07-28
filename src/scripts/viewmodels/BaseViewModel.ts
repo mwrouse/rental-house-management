@@ -1,7 +1,5 @@
 import * as ko from "knockout";
-
-import Configuration = require("models/Configuration");
-
+var system = require('system');
 
 /**
  * This is the base view model, it will load configuration from
@@ -9,7 +7,7 @@ import Configuration = require("models/Configuration");
  * (for the bills page, history page, etc...)
  */
 class BaseViewModel {
-    public Config: IConfiguration = Configuration;
+    public System: ISystem = system;
 
     public ActiveModule: KnockoutObservable<IManifest>;
 

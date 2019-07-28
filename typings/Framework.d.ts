@@ -6,7 +6,7 @@ interface IManifest {
 }
 
 interface IModuleLoader {
-    GetModules(): IManifest[];
+    GetModules(): JQueryPromise<IManifest[]>;
 }
 
 interface IViewModel {

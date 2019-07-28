@@ -586,7 +586,6 @@ $Router->Post('/lists/{id}/edit', function($id) {
     return $list->Data;
   }
 
-
   $this->Abort('204', 'Could not update list');
 })->RequiredData(['List']);
 
@@ -608,9 +607,9 @@ $Router->Get('/configuration', function() {
   if ($res == null)
     $this->Abort('404', 'Configuration not found');
 
-  $res = $res[0];
+  $res = $res[0]['Value'];
 
-  return $res;
+  return json_decode($res);
 });
 
 /**

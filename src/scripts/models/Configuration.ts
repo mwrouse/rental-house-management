@@ -1,7 +1,7 @@
 let $ = require("jquery");
 let ko = require("knockout");
 
-import ModuleLoader = require("../../modules/ModuleLoader");
+import * as ModuleLoader from "../../modules/ModuleLoader";
 
 
 /**
@@ -10,13 +10,16 @@ import ModuleLoader = require("../../modules/ModuleLoader");
 class Configuration implements IConfiguration {
   public SiteName: KnockoutObservable<string>;
 
-  public Modules: IManifest[];
+  public Modules: KnockoutObservableArray<IManifest> = ko.observableArray([]);
 
   /**
    * Constructor populates defaults
    */
   constructor() {
-    this.Modules = ModuleLoader.GetModules();
+
+    ModuleLoader.GetModules().then((modules) => {
+      this.Modules(modules);
+    });
 
     this.SiteName = ko.observable("");
 

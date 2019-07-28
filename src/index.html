@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="styles/main.css">
   </head>
   <body id="page-top">
-    <div id="wrapper" data-bind="block: IsLoading">
+    <div id="wrapper">
       <!-- Navigation -->
       <ul id="accordianSidebar" class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordian">
         <a class="sidebar-brand d-flex align-items-center justify-content-center" style="color: #fff">
@@ -20,15 +20,14 @@
         <div class="sidebar-divider my-0"></div>
 
         <!-- ko foreach: System.Modules -->
-        <li class="nav-item active" data-bind="click: $root.ChangeView">
-             <a class="nav-link"><i data-bind="attr: { class: 'fa ' + NavIcon }"></i> <span data-bind="text: Title"></span></a>
-        </li>
+          <li class="nav-item" data-bind="click: $root.ChangeView, css: { active: $root.ActiveModule().Key == $data.Key }">
+              <a href="#" class="nav-link"><i data-bind="attr: { class: 'fa ' + NavIcon }"></i> <span data-bind="text: Title"></span></a>
+          </li>
         <!-- /ko -->
-
       </ul>
 
       <!-- Content Wrapper -->
-      <div id="content-wrapper" class="d-flex flex-column">
+      <div id="content-wrapper" class="d-flex flex-column" data-bind="block: IsLoading">
           <div id="content">
               <div class="container-fluid" data-bind="moduleView: ActiveModule">
                   Loading...
@@ -37,7 +36,6 @@
       </div>
 
     </div>
-
 
     <script src="scripts/lib/require.js"  data-main="scripts/require-config"></script>
   </body>

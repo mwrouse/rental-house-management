@@ -10,18 +10,38 @@ class BillsViewModel {
         this._loadBills();
     }
 
-
     public TotalBillCost = ko.computed(() => {
-        let cost = 0;
         let bills: IBill[] = this.Bills();
+        let cost = 0;
 
         for (let i = 0; i < bills.length; i++) {
             let bill: IBill = bills[i];
             cost += bill.Amount;
         }
-
-        return cost;
+        function numberWithCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        return '$' + numberWithCommas(cost);
     });
+
+
+    public BillsDueSoon = ko.computed(() => {
+        let bills: IBill[] = this.Bills();
+        let dueSoon = 0;
+
+        let targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + 3 /*days*/);
+
+        for (let i = 0; i < bills.length; i++) {
+            let bill: IBill = bills[i];
+            let dueDate = new Date(bill.DueDate);
+            if (dueDate <= targetDate)
+                dueSoon++;
+        }
+
+        return dueSoon;
+    });
+
 
     private _loadBills() {
         let dfd = $.Deferred<any>();

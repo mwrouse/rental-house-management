@@ -14,6 +14,13 @@ class System {
         this.WhenReady = this._readyDfd.promise();
 
         this._beginLoad();
+
+        this._ping();
+
+        // Check if logged in every five minutes
+        setInterval(() => {
+            this._ping();
+        }, 60000 * 5);
     }
 
 
@@ -81,6 +88,15 @@ class System {
             dfd.resolve();
         });
         return dfd.promise();
+    };
+
+
+    private _ping = () => {
+        $.get('/api/v1/auth/ping', (data: any) => {
+            if (!data.Data) {
+                window.location.href = '/login.html';
+            }
+        });
     };
 }
 

@@ -1,7 +1,6 @@
 <?php
 require_once('connection.php');
-
-$cookieName = "rental_login_token";
+require_once('session.php');
 
 /**
  * Authentication Endpoints
@@ -18,9 +17,7 @@ function AuthEndpoint($uri) {
  * Verifies that the user exists
  */
 $Router->SetAuthenticationMethod(function() {
-    global $cookieName;
-
-    return isset($_COOKIE[$cookieName]);
+    return $this->Session->DoesSessionExist();
 });
 
 
@@ -28,43 +25,39 @@ $Router->SetAuthenticationMethod(function() {
  * Endpoint to check if logged in
  */
 $Router->Get(AuthEndpoint('ping'), function() {
-    return True;
-})->Authenticate();
+    return $this->Session->DoesSessionExist();
+});
 
 
 /**
  * Logins in a user
  */
-$Router->Get(AuthEndpoint('login'), function() {
-    global $cookieName;
-
+$Router->Post(AuthEndpoint('login'), function() {
     $db = database();
 
     $result = $db->query("SELECT Id, password FROM tenants WHERE username=?", [
-        $this->Data['username']
+        strtolower($this->Data['Username'])
       ]);
 
     if (is_null($result))
-        return False;
+        return false;
 
-    $hashed_pwd = $result[0]['password'];
-    $access = password_verify($this->Data['password'], $hashed_pwd);
+    $hashed_pwd = trim($result[0]['password']);
 
-    if ($access)
-        $this->SetCookie($cookieName, $result[0]['Id']);
-    else
-        $this->RemoveCookie($cookieName);
+    $access = password_verify($this->Data['Password'], $hashed_pwd);
+
+    if ($access) {
+        SessionManager::CreateSession($result[0]['Id']);
+    }
 
     return $access;
-})->RequiredData(['username', 'password']);
+})->RequiredData(['Username', 'Password', 'RememberMe']);
 
 
 /**
  * Logs a user out
  */
 $Router->Get(AuthEndpoint('logout'), function() {
-    global $cookieName;
-
-    $this->RemoveCookie($cookieName);
+    $this->Session->DestroySession();
     return True;
 })->Authenticate();

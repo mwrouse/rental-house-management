@@ -12,6 +12,7 @@ require.config({
     jqueryblockui: 'lib/jqueryblockUI',
     metisMenu: 'lib/metisMenu',
     hashchange: 'lib/jquery-hashchange',
+    bootstrap: 'lib/bootstrap',
     sbadmin: 'lib/sb-admin-2',
     fontawesome: 'lib/fontawesome',
     moduleView: 'lib/bindings/moduleView',
@@ -19,12 +20,13 @@ require.config({
   }
 });
 
+
 // Require everything
 require(['knockout', 'jquery', 'fontawesome', 'system'], (ko, vm, jQuery) => {
   require(['jqueryui', 'hashchange', 'metisMenu'], () => {
-    require(['pager', 'sbadmin', 'jqueryblockui'], (pager, metisMenu, sbadmin) => {
+    require(['pager', 'bootstrap', 'sbadmin', 'jqueryblockui'], (pager) => {
 
-      require(['moduleView', 'lib/bindings/block'], (system: ISystem) => {
+      require(['system', 'moduleView', 'lib/bindings/block'], (system: ISystem) => {
         system.WhenReady.then(() => {
           require(['viewmodels/BaseViewModel'], (vm) => {
             let viewModel = new vm();

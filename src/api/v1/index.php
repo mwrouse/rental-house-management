@@ -23,9 +23,6 @@ $Router->SetParameters([
 
 
 
-require_once('authentication.php');
-require_once('authorization.php');
-
 
 /*****************************
  *           BILLS           *
@@ -625,7 +622,9 @@ $Router->Post('/configuration/update', function() {
 
 
 
-
+// Include Routes defined in other files
+require_once('authentication.php');
+require_once('authorization.php');
 
 
 

@@ -1,4 +1,5 @@
 <?php
+require_once('session.php');
 
 /**
  * Represents a request
@@ -7,6 +8,7 @@ class Request {
     public $Method;
     public $Uri;
     public $Data;
+    public $Session;
 
     private $_statusCode;
     private $_base;
@@ -17,6 +19,8 @@ class Request {
       $this->_base = $baseUri;
       $this->Data = $data;
       $this->_statusCode = 200;
+
+      $this->Session = SessionManager::GetSession();
     }
 
     /**
@@ -74,7 +78,7 @@ class Request {
      */
     public function SetCookie($name, $value, $expiration = null) {
       if ($expiration == null)
-        $expiration = time() + (86400 * 30);
+        $expiration = time() + (86400 * 5);
 
       setcookie($name, $value, $expiration, "/", $_SERVER['SERVER_NAME'], True, True);
       $_COOKIE[$name] = $value;
@@ -220,7 +224,7 @@ class Route {
         // Perform the endpoint callback
         $callbackReturn = call_user_func_array(Closure::bind($this->_callback, $request), $args);
 
-        if ($callbackReturn == null)
+        if (is_null($callbackReturn))
           throw new Exception('No Result');
 
         return (object) ['Data' => $callbackReturn, 'Request' => $request->Serialize()];

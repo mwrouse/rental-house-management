@@ -1,17 +1,10 @@
 <?php
-require_once('connection.php');
+require_once('database.php');
+require_once('utils.php');
+require_once('objectstore.php');
 
 $cookieName = 'login_token';
 
-if (!function_exists('uuid')) {
-    function uuid() {
-        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-        mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000,
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-        );
-    }
-}
 
 class SessionManager {
     private $db;
@@ -86,7 +79,7 @@ class SessionManager {
         global $cookieName;
         $db = database();
 
-        $sessionID = uuid();
+        $sessionID = Guid::NewGuid();
         $expiration = time() + (86400 * ($longRunning ? 15 : 5));
 
         $db->query("INSERT INTO sessions (Token, TenantID, Expiration) VALUES (?, ?, ?)", [

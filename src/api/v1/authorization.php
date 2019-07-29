@@ -1,7 +1,6 @@
 <?php
 require_once('authentication.php');
-require_once('connection.php');
-require_once('session.php');
+require_once('framework/include.php');
 
 $Router->Get(AuthEndpoint('me'), function() {
     global $cookieName;

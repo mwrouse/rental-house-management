@@ -2,18 +2,10 @@
 /**
  * PHP file for declaring routes
  */
-require_once('router.php');
-require_once('connection.php');
+require_once('framework/include.php');
+
 
 header('Content-type: application/json');
-
-function uuid() {
-  return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-    mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-    mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000,
-    mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-  );
-}
 
 $Router = new Router('/api/v1'); // Create router
 
@@ -34,13 +26,11 @@ $Router->SetParameters([
 $Router->Get('/bills', function() {
   global $Router;
 
-  $db = database();
-
-  $rows = $db->query("SELECT Id FROM bills WHERE FullyPaid=false");
+  $keys = ObjectStore::GetKeysForScope('bills');
 
   $bills = [];
-  foreach ($rows as $row) {
-    $bill = $Router->RunLocal('GET', '/bills/' . $row['Id']);
+  foreach ($keys as $key) {
+    $bill = $Router->RunLocal('GET', sprintf('/bills/%s', $key));
     array_push($bills, $bill->Data);
   }
 
@@ -51,7 +41,7 @@ $Router->Get('/bills', function() {
  * Make a new bill
  */
 $Router->Post('/bills/new', function() {
-  global $Router;
+  /*global $Router;
 
   // TODO: Verify DueDate is an actual date
 
@@ -83,7 +73,7 @@ $Router->Post('/bills/new', function() {
     return $check->Data;
   }
 
-  $this->Abort('204', 'Could not create bill');
+  $this->Abort('204', 'Could not create bill');*/
 })->RequiredData(['Title', 'Amount', 'DueDate', 'CreatorId', 'PayTo']);
 
 /**
@@ -92,35 +82,28 @@ $Router->Post('/bills/new', function() {
 $Router->Get('/bills/{id}', function($id) {
   global $Router;
 
-  $db = database();
-  $res = $db->query("SELECT Id, Title, DueDate, Amount, CreatedBy, FullyPaid, PayTo FROM bills WHERE Id=?", [$id]);
-
-  if (is_null($res))
-    $this->Abort(404, 'Could not find bill');
-
-  // Only use the first item in the result (should only ever be one)
-  $res = $res[0];
+  $bill = ObjectStore::Get('bills', $id);
 
   // Retrieve the tenant
-  $tenant = $Router->RunLocal('GET', '/tenants/' . $res['CreatedBy']);
-  $res['CreatedBy'] = $tenant->Data;
+  $tenant = $Router->RunLocal('GET', sprintf('/tenants/%d', $bill->CreatedBy));
+  $bill->CreatedBy = $tenant->Data;
 
   // Retrieve the payment target
-  $target = $Router->RunLocal('GET', '/targets/'.$res['PayTo']);
-  $res['PayTo'] = $target->Data;
+  $target = $Router->RunLocal('GET', sprintf('/targets/%s', $bill->PayTo));
+  $bill->PayTo = $target->Data;
 
   // Data Type Conversions
-  $res['Amount'] = floatval($res['Amount']);
-  $res['FullyPaid'] = ($res['FullyPaid'] == 0) ? false : true;
+  $bill->Amount = floatval($bill->Amount);
+  $bill->FullyPaid = ($bill->FullyPaid == 0) ? false : true;
 
-  return $res;
+  return $bill;
 });
 
 /**
  * Get list of payments for a bill
  */
 $Router->Get('/bills/{id}/payments', function($id) {
-  global $Router;
+  /*global $Router;
 
   // Verify that the bill exists
   $bill = $Router->RunLocal('GET', '/bills/'.$id);
@@ -141,14 +124,14 @@ $Router->Get('/bills/{id}/payments', function($id) {
     array_push($payments, $payment->Data);
   }
 
-  return $payments;
+  return $payments;*/
 });
 
 /**
  * Get a specific payment
  */
 $Router->Get('/bills/{id}/payments/{id}', function($billId, $paymentId) {
-  global $Router;
+  /*global $Router;
 
   // Verify that the bill exists
   $bill = $Router->RunLocal('GET', '/bills/'.$billId);
@@ -179,14 +162,14 @@ $Router->Get('/bills/{id}/payments/{id}', function($billId, $paymentId) {
   $res['Amount'] = floatval($res['Amount']);
   $res['PaidInFull'] = ($res['PaidInFull'] == 0) ? false : true;
 
-  return $res;
+  return $res;*/
 });
 
 /**
  * Pay a bill
  */
 $Router->Post('/bills/{id}/payments/new', function($id) {
-  global $Router;
+ /* global $Router;
 
   // Verify the bill exists
   $bill = $Router->RunLocal('GET', '/bills/'.$id);
@@ -202,7 +185,7 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
   }
   $tenant = $tenant->Data;
 
-  $newId = uuid(); // Id for new payment
+  $newId = Guid::NewGuid(); // Id for new payment
 
   // Add to the database
   $db = database();
@@ -222,14 +205,14 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
     return $payment->Data;
   }
 
-  $this->Abort('204', 'Could not add payment');
+  $this->Abort('204', 'Could not add payment');*/
 })->RequiredData(['TenantId', 'Amount', 'PaidInFull']);
 
 /**
  * Modify a bill
  */
 $Router->Post('/bills/{id}/edit', function($id) {
-  global $Router;
+  /*global $Router;
 
   // Verify that the bill exists
   $bill = $Router->RunLocal('GET', '/bills/'.$id);
@@ -253,7 +236,7 @@ $Router->Post('/bills/{id}/edit', function($id) {
     return $bill->Data;
   }
 
-  $this->Abort('204', 'Could not update bill');
+  $this->Abort('204', 'Could not update bill');*/
 })->RequiredData(['Title', 'DueDate', 'Amount']);
 
 
@@ -267,7 +250,7 @@ $Router->Post('/bills/{id}/edit', function($id) {
  * Retrieves all active tenants
  */
 $Router->Get('/tenants', function() {
-  global $Router;
+  /*global $Router;
   $db = database();
 
   // Query for all active tenants
@@ -279,14 +262,14 @@ $Router->Get('/tenants', function() {
     array_push($tenants, $tenant->Data);
   }
 
-  return $tenants;
+  return $tenants;*/
 });
 
 /**
  * Create a tenant
  */
 $Router->Post('/tenants/new', function() {
-  global $Router;
+  /*global $Router;
 
   // TODO: Verfy StartDate is an actual date
 
@@ -311,14 +294,14 @@ $Router->Post('/tenants/new', function() {
   }
 
   // Failed to create tenant
-  $this->Abort('204', 'Could not create tenant');
+  $this->Abort('204', 'Could not create tenant');*/
 })->RequiredData(['FirstName', 'LastName', 'StartDate']);
 
 /**
  * Get a specific tenant
  */
 $Router->Get('/tenants/{id}', function($id) {
-  $db = database();
+  /*$db = database();
   $res = $db->query("SELECT Id, FirstName, LastName, StartDate, EndDate, Permissions FROM tenants WHERE Id=?", [
     $id
   ]);
@@ -335,14 +318,14 @@ $Router->Get('/tenants/{id}', function($id) {
 
   $res['Permissions'] = explode(",", $res['Permissions']);
 
-  return $res;
+  return $res;*/
 });
 
 /**
  * Modify a tenant
  */
 $Router->Post('/tenants/{id}/edit', function($id) {
-  global $Router;
+  /*global $Router;
 
   // Verify that the tenant exists
   $tenant = $Router->RunLocal('GET', '/tenants/'.$id);
@@ -367,7 +350,7 @@ $Router->Post('/tenants/{id}/edit', function($id) {
     return $tenant->Data;
   }
 
-  $this->Abort('204', 'Could not update tenant');
+  $this->Abort('204', 'Could not update tenant');*/
 })->RequiredData(['FirstName', 'LastName', 'StartDate']);
 
 
@@ -382,7 +365,7 @@ $Router->Post('/tenants/{id}/edit', function($id) {
  * Retrieve all targets
  */
 $Router->Get('/targets', function() {
-  global $Router;
+  /*global $Router;
 
   $db = database();
   $rows = $db->Query("SELECT Id FROM payment_targets WHERE Archived=false");
@@ -393,14 +376,14 @@ $Router->Get('/targets', function() {
     array_push($targets, $target->Data);
   }
 
-  return $targets;
+  return $targets;*/
 });
 
 /**
  * Create a target
  */
 $Router->Post('/targets/new', function() {
-  global $Router;
+  /*global $Router;
 
   $id = uuid(); // Id for the new target
 
@@ -418,14 +401,14 @@ $Router->Post('/targets/new', function() {
   }
 
   // Target not created
-  $this->Abort('204', 'Could not create target');
+  $this->Abort('204', 'Could not create target');*/
 })->RequiredData(['Name', 'Url']);
 
 /**
  * Get a specific target
  */
 $Router->Get('/targets/{id}', function($id) {
-  global $Router;
+  /*global $Router;
 
   $db = database();
   $res = $db->query("SELECT Id, Name, Url, Archived FROM payment_targets WHERE Id=?", [
@@ -455,14 +438,14 @@ $Router->Get('/targets/{id}', function($id) {
   // Data Type conversion
   $res['Archived'] = ($res['Archived'] == 0) ? false : true;
 
-  return $res;
+  return $res;*/
 });
 
 /**
  * Update a target
  */
 $Router->Post('/targets/{id}/edit', function($id) {
-  global $Router;
+  /*global $Router;
 
   // Confirm target exists and is not a tenant
   $target = $Router->RunLocal('GET', '/targets/'.$id);
@@ -486,7 +469,7 @@ $Router->Post('/targets/{id}/edit', function($id) {
   }
 
   // Could not update
-  $this->Abort('204', 'Could not update Payment Target');
+  $this->Abort('204', 'Could not update Payment Target');*/
 })->RequiredData(['Name', 'Url', 'Archived']);
 
 
@@ -499,7 +482,7 @@ $Router->Post('/targets/{id}/edit', function($id) {
  * Get all the lists
  */
 $Router->Get('/lists', function() {
-  global $Router;
+  /*global $Router;
 
   $db = database();
   $rows = $db->query("SELECT Id FROM lists");
@@ -510,14 +493,14 @@ $Router->Get('/lists', function() {
     array_push($lists, $list->Data);
   }
 
-  return $lists;
+  return $lists;*/
 });
 
 /**
  * Create a new list
  */
 $Router->Post('/lists/new', function() {
-  global $Router;
+  /*global $Router;
 
   $id = uuid(); // Id for the new row
 
@@ -536,14 +519,14 @@ $Router->Post('/lists/new', function() {
   }
 
   // Failed to create list
-  $this->Abort('204', 'Could not create list');
+  $this->Abort('204', 'Could not create list');*/
 })->RequiredData(['List']);
 
 /**
  * Get a specific list
  */
 $Router->Get('/lists/{id}', function($id) {
-  $db = database();
+  /*$db = database();
   $res = $db->query("SELECT ListData FROM lists WHERE Id=?", [
     $id
   ]);
@@ -557,14 +540,14 @@ $Router->Get('/lists/{id}', function($id) {
   // Convert from JSON to an object
   $list = json_decode($res['ListData']);
 
-  return $list;
+  return $list;*/
 });
 
 /**
  * Update the metadata about a list
  */
 $Router->Post('/lists/{id}/edit', function($id) {
-  global $Router;
+  /*global $Router;
 
   // Verify that the list exists
   $list = $Router->RunLocal('GET', '/lists/'.$id);
@@ -586,7 +569,7 @@ $Router->Post('/lists/{id}/edit', function($id) {
     return $list->Data;
   }
 
-  $this->Abort('204', 'Could not update list');
+  $this->Abort('204', 'Could not update list');*/
 })->RequiredData(['List']);
 
 
@@ -600,16 +583,8 @@ $Router->Post('/lists/{id}/edit', function($id) {
  * Retrieves the configuration
  */
 $Router->Get('/configuration', function() {
-  // Retrieve from the database
-  $db = database();
-  $res = $db->query("SELECT Value from object_store WHERE Name='config'");
-
-  if ($res == null)
-    $this->Abort('404', 'Configuration not found');
-
-  $res = $res[0]['Value'];
-
-  return json_decode($res);
+  $config = ObjectStore::Get('app', 'config');
+  return $config;
 });
 
 /**

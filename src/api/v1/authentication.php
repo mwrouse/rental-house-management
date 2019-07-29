@@ -1,6 +1,5 @@
 <?php
-require_once('connection.php');
-require_once('session.php');
+require_once('framework/include.php');
 
 /**
  * Authentication Endpoints

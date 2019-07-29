@@ -26,16 +26,18 @@ $Router->SetParameters([
 $Router->Get('/bills', function() {
   global $Router;
 
-  $keys = ObjectStore::GetKeysForScope('bills');
+  $billIds = ObjectStore::GetKeysForScope('bills');
+  if (!is_array($billIds))
+    $billIds = [$billIds];
 
   $bills = [];
-  foreach ($keys as $key) {
-    $bill = $Router->RunLocal('GET', sprintf('/bills/%s', $key));
+  foreach ($billIds as $billId) {
+    $bill = $Router->RunLocal('GET', sprintf('/bills/%s', $billId));
     array_push($bills, $bill->Data);
   }
 
   return $bills;
-});
+})->Authenticate();
 
 /**
  * Make a new bill
@@ -74,7 +76,7 @@ $Router->Post('/bills/new', function() {
   }
 
   $this->Abort('204', 'Could not create bill');*/
-})->RequiredData(['Title', 'Amount', 'DueDate', 'CreatorId', 'PayTo']);
+})->RequiredData(['Title', 'Amount', 'DueDate', 'CreatorId', 'PayTo'])->Authenticate();
 
 /**
  * Get a bill specific bill
@@ -85,7 +87,7 @@ $Router->Get('/bills/{id}', function($id) {
   $bill = ObjectStore::Get('bills', $id);
 
   // Retrieve the tenant
-  $tenant = $Router->RunLocal('GET', sprintf('/tenants/%d', $bill->CreatedBy));
+  $tenant = $Router->RunLocal('GET', sprintf('/tenants/%s', $bill->CreatedBy));
   $bill->CreatedBy = $tenant->Data;
 
   // Retrieve the payment target
@@ -96,79 +98,63 @@ $Router->Get('/bills/{id}', function($id) {
   $bill->Amount = floatval($bill->Amount);
   $bill->FullyPaid = ($bill->FullyPaid == 0) ? false : true;
 
+  $bill->Id = $id;
+
+  // Get payments
+  $payments = $Router->RunLocal('GET', sprintf('/bills/%s/payments', $id));
+  $bill->Payments = $payments->Data;
+
+  // Calculate Remainder
+  $bill->Remaining = $bill->Amount;
+  foreach ($bill->Payments as $payment) {
+    $bill->Remaining -= $payment->Amount;
+  }
+
   return $bill;
-});
+})->Authenticate();
 
 /**
  * Get list of payments for a bill
  */
 $Router->Get('/bills/{id}/payments', function($id) {
-  /*global $Router;
+  global $Router;
 
-  // Verify that the bill exists
-  $bill = $Router->RunLocal('GET', '/bills/'.$id);
-  if (is_null($bill) || !isset($bill->Data)) {
-    $this->Abort('404', 'Invalid Bill');
-  }
-  $bill = $bill->Data;
+  $payments = ObjectStore::Get('payments', $id);
+  if (is_null($payments))
+    $payments = [];
 
-  // Get list of payments
-  $db = database();
-  $rows = $db->query("SELECT Id FROM payments WHERE BillId=? ORDER BY PaymentDate ASC", [
-    $bill['Id']
-  ]);
+  if (!is_array($payments))
+    $payments = [$payments];
 
-  $payments = [];
-  foreach ($rows as $row) {
-    $payment = $Router->RunLocal('GET', '/bills/'.$bill['Id'].'/payments/'.$row['Id']);
-    array_push($payments, $payment->Data);
+  for ($i = 0; $i < count($payments); $i++) {
+    $tenant = $Router->RunLocal('GET', sprintf('/tenants/%s', ($payments[$i])->PaidBy));
+    ($payments[$i])->PaidBy = $tenant->Data;
   }
 
-  return $payments;*/
-});
+  return $payments;
+})->Authenticate();
 
-/**
- * Get a specific payment
- */
-$Router->Get('/bills/{id}/payments/{id}', function($billId, $paymentId) {
-  /*global $Router;
-
-  // Verify that the bill exists
-  $bill = $Router->RunLocal('GET', '/bills/'.$billId);
-  if (is_null($bill) || !isset($bill->Data)) {
-    $this->Abort('404', 'Invalid Bill');
-  }
-  $bill = $bill->Data;
-
-  // Fetch the payment from the database
-  $db = database();
-  $res = $db->query("SELECT PaidBy, Amount, PaymentDate, PaidInFull FROM payments WHERE BillId=? AND Id=?", [
-    $bill['Id'],
-    $paymentId
-  ]);
-
-  if (is_null($res))
-    $this->Abort('404', 'Could not find payment');
-
-  // Should only ever be one result
-  $res = $res[0];
-
-  // Add computed data
-  $tenant = $Router->RunLocal('GET', '/tenants/' . $res['PaidBy']);
-  $res['PaidBy'] = $tenant->Data;
-  $res['Bill'] = $billId;
-
-  // Data Type Conversion
-  $res['Amount'] = floatval($res['Amount']);
-  $res['PaidInFull'] = ($res['PaidInFull'] == 0) ? false : true;
-
-  return $res;*/
-});
 
 /**
  * Pay a bill
  */
 $Router->Post('/bills/{id}/payments/new', function($id) {
+  global $Router;
+
+  $payments = ObjectStore::Get('payments', $id);
+  if (is_null($payments))
+    $payments = [];
+
+  $payment = [
+    'BillID' => $id,
+    'Amount' => $this->Data['Amount'],
+    'PaidBy' => $this->Session->TenantID,
+    'Date' => date('Y-m-d')
+  ];
+
+  array_push($payments, $payment);
+
+  ObjectStore::Save('payments', $id, $payments);
  /* global $Router;
 
   // Verify the bill exists
@@ -206,7 +192,7 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
   }
 
   $this->Abort('204', 'Could not add payment');*/
-})->RequiredData(['TenantId', 'Amount', 'PaidInFull']);
+})->RequiredData(['Amount'])->Authenticate();
 
 /**
  * Modify a bill
@@ -237,7 +223,7 @@ $Router->Post('/bills/{id}/edit', function($id) {
   }
 
   $this->Abort('204', 'Could not update bill');*/
-})->RequiredData(['Title', 'DueDate', 'Amount']);
+})->RequiredData(['Title', 'DueDate', 'Amount'])->Authenticate();
 
 
 
@@ -250,20 +236,20 @@ $Router->Post('/bills/{id}/edit', function($id) {
  * Retrieves all active tenants
  */
 $Router->Get('/tenants', function() {
-  /*global $Router;
-  $db = database();
+  global $Router;
 
-  // Query for all active tenants
-  $rows = $db->query("SELECT Id FROM tenants WHERE EndDate IS NULL or EndDate > CURDATE()");
+  $tenantIds = ObjectStore::GetKeysForScope('tenants');
+  if (!is_array($tenantIds))
+    $tenantIds = [$tenantIds];
 
   $tenants = [];
-  foreach ($rows as $row) {
-    $tenant = $Router->RunLocal('GET', '/tenants/' . $row['Id']);
+  foreach ($tenantIds as $tenantId) {
+    $tenant = $Router->RunLocal('GET', sprintf('/tenants/%s', $tenantId));
     array_push($tenants, $tenant->Data);
   }
 
-  return $tenants;*/
-});
+  return $tenants;
+})->Authenticate();
 
 /**
  * Create a tenant
@@ -295,31 +281,24 @@ $Router->Post('/tenants/new', function() {
 
   // Failed to create tenant
   $this->Abort('204', 'Could not create tenant');*/
-})->RequiredData(['FirstName', 'LastName', 'StartDate']);
+})->RequiredData(['FirstName', 'LastName', 'StartDate'])->Authenticate();
 
 /**
  * Get a specific tenant
  */
 $Router->Get('/tenants/{id}', function($id) {
-  /*$db = database();
-  $res = $db->query("SELECT Id, FirstName, LastName, StartDate, EndDate, Permissions FROM tenants WHERE Id=?", [
-    $id
-  ]);
+  $tenant = ObjectStore::Get('tenants', $id);
+  if (is_null($tenant))
+    return null;
 
-  if (is_null($res))
-    $this->Abort(404, 'Could not find tenant');
+  $tenant->Id = $id;
+  $tenant->Name = $tenant->FirstName . ' ' . $tenant->LastName;
+  $tenant->AbbreviatedName = $tenant->FirstName . ' ' . substr($tenant->LastName, 0, 1) . '.';
 
-  // Should only ever be one result
-  $res = $res[0];
+  //$tenant->Permissions = explode(",", $tenant->Permissions);
 
-  // Add computed values
-  $res['Name'] = $res['FirstName'] . ' ' . $res['LastName'];
-  $res['AbbreviatedName'] = $res['FirstName'] . ' ' . substr($res['LastName'], 0, 1) . '.';
-
-  $res['Permissions'] = explode(",", $res['Permissions']);
-
-  return $res;*/
-});
+  return $tenant;
+})->Authenticate();
 
 /**
  * Modify a tenant
@@ -351,7 +330,7 @@ $Router->Post('/tenants/{id}/edit', function($id) {
   }
 
   $this->Abort('204', 'Could not update tenant');*/
-})->RequiredData(['FirstName', 'LastName', 'StartDate']);
+})->RequiredData(['FirstName', 'LastName', 'StartDate'])->Authenticate();
 
 
 
@@ -359,7 +338,7 @@ $Router->Post('/tenants/{id}/edit', function($id) {
  *      Payment Targets     *
  ****************************/
 
- // TODO: Allow tennats to be targets
+ // TODO: Allow tenants to be targets
 
 /**
  * Retrieve all targets
@@ -377,7 +356,7 @@ $Router->Get('/targets', function() {
   }
 
   return $targets;*/
-});
+})->Authenticate();
 
 /**
  * Create a target
@@ -402,7 +381,7 @@ $Router->Post('/targets/new', function() {
 
   // Target not created
   $this->Abort('204', 'Could not create target');*/
-})->RequiredData(['Name', 'Url']);
+})->RequiredData(['Name', 'Url'])->Authenticate();
 
 /**
  * Get a specific target
@@ -439,7 +418,7 @@ $Router->Get('/targets/{id}', function($id) {
   $res['Archived'] = ($res['Archived'] == 0) ? false : true;
 
   return $res;*/
-});
+})->Authenticate();
 
 /**
  * Update a target
@@ -470,7 +449,7 @@ $Router->Post('/targets/{id}/edit', function($id) {
 
   // Could not update
   $this->Abort('204', 'Could not update Payment Target');*/
-})->RequiredData(['Name', 'Url', 'Archived']);
+})->RequiredData(['Name', 'Url', 'Archived'])->Authenticate();
 
 
 
@@ -494,7 +473,7 @@ $Router->Get('/lists', function() {
   }
 
   return $lists;*/
-});
+})->Authenticate();
 
 /**
  * Create a new list
@@ -520,7 +499,7 @@ $Router->Post('/lists/new', function() {
 
   // Failed to create list
   $this->Abort('204', 'Could not create list');*/
-})->RequiredData(['List']);
+})->RequiredData(['List'])->Authenticate();
 
 /**
  * Get a specific list
@@ -541,7 +520,7 @@ $Router->Get('/lists/{id}', function($id) {
   $list = json_decode($res['ListData']);
 
   return $list;*/
-});
+})->Authenticate();
 
 /**
  * Update the metadata about a list
@@ -570,7 +549,7 @@ $Router->Post('/lists/{id}/edit', function($id) {
   }
 
   $this->Abort('204', 'Could not update list');*/
-})->RequiredData(['List']);
+})->RequiredData(['List'])->Authenticate();
 
 
 
@@ -585,14 +564,14 @@ $Router->Post('/lists/{id}/edit', function($id) {
 $Router->Get('/configuration', function() {
   $config = ObjectStore::Get('app', 'config');
   return $config;
-});
+})->Authenticate();
 
 /**
  * Updates the configuration
  */
 $Router->Post('/configuration/update', function() {
 
-});
+})->Authenticate();
 
 
 

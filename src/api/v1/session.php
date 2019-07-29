@@ -66,6 +66,7 @@ class SessionManager {
             FROM tenants WHERE Id=?", [ $this->TenantID ]);
         $tenant = $tenantQry[0];
         $this->Tenant = $tenant;
+        $this->Tenant['Permissions'] = explode(",", $this->Tenant['Permissions']);
         $this->Username = $tenant['username'];
     }
 

@@ -13,7 +13,7 @@ class Request {
     private $_statusCode;
     private $_base;
 
-    public function __construct($method, $uri, $baseUri, $data) {
+    public function __construct($method, $uri, $baseUri, $data=null) {
       $this->Method = strtoupper($method);
       $this->Uri = $uri;
       $this->_base = $baseUri;
@@ -171,7 +171,7 @@ class Route {
    * @param Request $request The request that will become the callback $this
    * @return Value returned from callback (if endpoint matched)
    */
-  public function TryRun($request, $authMethod, $permissions = '') {
+  public function TryRun($request, $authMethod) {
     if (!in_array($request->Method, $this->_methods)) {
       return null; // Method not supported
     }
@@ -197,27 +197,25 @@ class Route {
             return null;
           }
 
+          // Check if user is logged in
           $isAuthed = call_user_func(Closure::bind($authMethod, $request));
-
           if ($isAuthed == False) {
             $request->Abort(401, 'Not Logged In');
             return null;
           }
 
-          // Check permissions
-          if (!is_null($permissions)) {
-            $permissions = explode(",", $permissions);
-            if (count($this->_requiredPermissions) > 0) {
-              $matches = 0;
-              foreach ($this->_requiredPermissions as $permission) {
-                if (in_array($permission, $permissions))
-                  $matches = $matches + 1;
-              }
-              if ($matches != count($this->_requiredPermissions))
-              {
-                $request->Abort(401, 'Invalid Permissions');
-              }
+          // Check if user has valid permissions
+          if (count($this->_requiredPermissions) > 0) {
+            $permissions = $request->Session->Tenant['Permissions'];
+            $matches = 0;
+
+            foreach ($this->_requiredPermissions as $permission) {
+              if (in_array($permission, $permissions))
+                $matches = $matches + 1;
             }
+
+            if ($matches != count($this->_requiredPermissions))
+              $request->Abort(401, 'Invalid Permissions');
           }
         }
 
@@ -380,7 +378,7 @@ class Router {
     $found = false;
 
     foreach ($this->_routes as $route) {
-      $ret = $route->TryRun($request, $this->_authenticationMethod, $_COOKIE['user_permissions']);
+      $ret = $route->TryRun($request, $this->_authenticationMethod);
 
       if (!is_null($ret)) {
         $found = true;
@@ -411,7 +409,7 @@ class Router {
     $request = new Request(strtoupper($method), $this->_base . $this->_normalizeEndpoint($url), $postData);
 
     foreach ($this->_routes as $route) {
-      $ret = $route->TryRun($request, $this->_authenticationMethod, $_COOKIE['user_permissions']);
+      $ret = $route->TryRun($request, $this->_authenticationMethod);
 
       if (!is_null($ret)) {
         $found = true;

@@ -28,6 +28,18 @@ class BillsViewModel {
         return '$' + numberWithCommas(cost);
     });
 
+    public TotalRemaining = ko.computed(() => {
+        let bills: IBill[] = this.Bills();
+        let cost = 0;
+
+        for (let i = 0; i < bills.length; i++) {
+            let bill: IBill = bills[i];
+            cost += bill.Remaining;
+        }
+
+        return '$' + numberWithCommas(cost);
+    });
+
     // Number of bills that are due soon
     public BillsDueSoon = ko.computed(() => {
         let bills: IBill[] = this.Bills();
@@ -141,6 +153,57 @@ class BillsViewModel {
     });
 
 
+    public HasUserPaidActiveBill = ko.computed(() => {
+        let bill = this.ActiveBill();
+        if (bill == null)
+            return;
+
+        for (let payment of bill.Payments) {
+            if (payment.PaidBy.Id == system.CurrentUser.Id)
+                return true;
+        }
+        return false;
+    });
+
+    public GetAmountPaidByUser = (bill: IBill): number => {
+        let total = 0;
+        for (let payment of bill.Payments) {
+            if (payment.PaidBy.Id == system.CurrentUser.Id)
+                total += payment.Amount;
+        }
+        return total;
+    };
+
+    public GetUserAlreadyPaidNotice = (bill: IBill): string => {
+        let split = this.GetBillSplitAmount(bill);
+        let amountAlreadyPaid = this.GetAmountPaidByUser(bill);
+        let remaining = split - amountAlreadyPaid;
+
+        return 'You have already paid $' + numberWithCommas(amountAlreadyPaid) + ' to this bill. You have $' + numberWithCommas(remaining) + ' remaining.';
+    };
+
+
+    public MakeBillPayment = (bill: IBill) => {
+        let amountEl = document.getElementById('paymentAmount') as HTMLInputElement;
+        let amount = amountEl.value;
+
+        this.IsLoading(true);
+
+        let dfd = $.Deferred<any>();
+
+        $.post('/api/v1/bills/' + bill.Id + '/payments/new', {
+            Amount: parseFloat(amount)
+        })
+        .done(() => {
+            dfd.resolve();
+            this.ActiveBill(null);
+            system.ChangeHash('bills');
+            this.IsLoading(false);
+        });
+        amountEl.value = null;
+
+        return dfd.promise();
+    };
 
     private _loadBills() {
         let dfd = $.Deferred<any>();

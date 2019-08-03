@@ -153,43 +153,7 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
   array_push($payments, $payment);
 
   ObjectStore::Save('payments', $id, $payments);
- /* global $Router;
 
-  // Verify the bill exists
-  $bill = $Router->RunLocal('GET', '/bills/'.$id);
-  if (is_null($bill) || !isset($bill->Data)) {
-    $this->Abort('404', 'Invalid Bill');
-  }
-  $bill = $bill->Data;
-
-  // Verify the tenant exists
-  $tenant = $Router->RunLocal('GET', '/tenants/' . $this->Data['TenantId']);
-  if (is_null($tenant) || !isset($tenant->Data)) {
-    $this->Abort('400', 'Invalid Tenant');
-  }
-  $tenant = $tenant->Data;
-
-  $newId = Guid::NewGuid(); // Id for new payment
-
-  // Add to the database
-  $db = database();
-  $qry = $db->query("INSERT INTO payments (Id, BillId, PaidBy, Amount, PaidInFull) VALUES (?, ?, ?, ?, ?)", [
-    $newId,
-    $bill['Id'],
-    $tenant['Id'],
-    $this->Data['Amount'],
-    $this->Data['PaidInFull']
-  ]);
-
-  // Confirm that the payment was created
-  $payment = $Router->RunLocal('GET', '/bills/'.$id.'/payments/'.$newId);
-
-  if (!is_null($payment) && isset($payment->Data)) {
-    // TODO: Handle the bill being paid in full
-    return $payment->Data;
-  }
-
-  $this->Abort('204', 'Could not add payment');*/
 })->RequiredData(['Amount'])->Authenticate();
 
 /**

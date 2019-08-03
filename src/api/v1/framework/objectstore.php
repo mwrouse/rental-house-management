@@ -70,7 +70,7 @@ class ObjectStore {
             if (self::DoesKeyExist($scope, $key))
             {
                 $db->query("UPDATE object_store SET value=? WHERE scope=? AND _key=?", [
-                    json_encode($value),
+                    json_encode($value, JSON_NUMERIC_CHECK),
                     $scope,
                     $key
                 ]);
@@ -79,7 +79,7 @@ class ObjectStore {
                 $db->query("INSERT INTO object_store (scope, _key, value) VALUES (?, ?, ?)", [
                     $scope,
                     $key,
-                    json_encode($value)
+                    json_encode($value, JSON_NUMERIC_CHECK)
                 ]);
             }
             return True;

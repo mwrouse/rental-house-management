@@ -9,12 +9,20 @@ var system: ISystem = require('system');
 class BaseViewModel {
     public System: ISystem = system;
 
-    public ActiveModule: KnockoutObservable<IManifest>;
+    public ActiveModule: KnockoutObservable<IManifest> = ko.observable(null);
 
     public IsLoading: KnockoutObservable<boolean> = ko.observable(true);
 
     constructor() {
-        this.ActiveModule = ko.observable(this.System.Modules[0]);
+        let hash = window.location.hash.replace('#!/', '');
+        for (let module of this.System.Modules) {
+            if (module.Key == hash)
+                this.ActiveModule(module);
+        }
+
+        if (!this.ActiveModule())
+            this.ActiveModule = ko.observable(this.System.Modules[0]);
+
         this.IsLoading(false);
     }
 

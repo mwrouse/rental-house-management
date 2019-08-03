@@ -27,8 +27,6 @@ $Router->Get('/bills', function() {
   global $Router;
 
   $billIds = ObjectStore::GetKeysForScope('bills');
-  if (!is_array($billIds))
-    $billIds = [$billIds];
 
   $bills = [];
   foreach ($billIds as $billId) {
@@ -148,7 +146,7 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
   $payment = [
     'BillID' => $id,
     'Amount' => $this->Data['Amount'],
-    'PaidBy' => $this->Session->TenantID,
+    'PaidBy' => $this->Session->CurrentUser->Id,
     'Date' => date('Y-m-d')
   ];
 
@@ -239,8 +237,6 @@ $Router->Get('/tenants', function() {
   global $Router;
 
   $tenantIds = ObjectStore::GetKeysForScope('tenants');
-  if (!is_array($tenantIds))
-    $tenantIds = [$tenantIds];
 
   $tenants = [];
   foreach ($tenantIds as $tenantId) {
@@ -291,7 +287,6 @@ $Router->Get('/tenants/{id}', function($id) {
   if (is_null($tenant))
     return null;
 
-  $tenant->Id = $id;
   $tenant->Name = $tenant->FirstName . ' ' . $tenant->LastName;
   $tenant->AbbreviatedName = $tenant->FirstName . ' ' . substr($tenant->LastName, 0, 1) . '.';
 

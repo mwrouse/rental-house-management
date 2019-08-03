@@ -32,21 +32,16 @@ $Router->Get(AuthEndpoint('ping'), function() {
  * Logins in a user
  */
 $Router->Post(AuthEndpoint('login'), function() {
-    $db = database();
-
-    $result = $db->query("SELECT Id, password FROM tenants WHERE username=?", [
-        strtolower($this->Data['Username'])
-      ]);
-
-    if (is_null($result))
+    $identity = ObjectStore::Get('identities', strtolower($this->Data['Username']));
+    if (is_null($identity))
         return false;
 
-    $hashed_pwd = trim($result[0]['password']);
+    $hashed_pwd = trim($identity->Password);
 
     $access = password_verify($this->Data['Password'], $hashed_pwd);
 
     if ($access) {
-        SessionManager::CreateSession($result[0]['Id']);
+        SessionManager::CreateSession($this->Data['Username']);
     }
 
     return $access;

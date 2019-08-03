@@ -20,6 +20,11 @@ class ObjectStore {
                 $results = $db->query("SELECT value FROM object_store WHERE scope=?", [ $scope ]);
             }
 
+            if (is_null($results)) {
+                error_log($scope . ' ' . $key . ' => ' . gettype($results));
+                return null;
+            }
+
             $final = [];
             foreach ($results as $result) {
                 array_push($final, json_decode($result['value']));
@@ -28,7 +33,7 @@ class ObjectStore {
             if (count($final) == 0)
                 return null;
 
-            if (count($final) == 1)
+            if (count($final) == 1 && !is_null($key))
                 return $final[0];
 
             return $final;
@@ -62,7 +67,7 @@ class ObjectStore {
         try {
             $db = database();
 
-            if (this::DoesKeyExist($scope, $key))
+            if (self::DoesKeyExist($scope, $key))
             {
                 $db->query("UPDATE object_store SET value=? WHERE scope=? AND _key=?", [
                     json_encode($value),

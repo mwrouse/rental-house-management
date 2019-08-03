@@ -7,7 +7,7 @@ $Router->Get(AuthEndpoint('me'), function() {
 
     $session = SessionManager::GetSession();
 
-    return $session->Tenant;
+    return $session->CurrentUser;
     /*global $Router;
     $tenantID = $_COOKIE[$cookieName];
 

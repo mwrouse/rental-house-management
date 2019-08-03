@@ -3,7 +3,7 @@ require_once('database.php');
 require_once('utils.php');
 require_once('objectstore.php');
 
-$cookieName = 'login_token';
+$cookieName = 'login_Id';
 
 
 class SessionManager {
@@ -12,84 +12,77 @@ class SessionManager {
     public $User = null;
     public $UserName = 'Anonymous';
 
-    public $Token;
+    public $Id;
     public $TenantID;
 
-    private $Expiration;
+    public $CurrentUser;
+
+    private $Sessions; // All sessions
+    private $Session = null; // Current session
+
 
     public function __construct() {
         global $cookieName;
-        $this->db = database();
 
         if (isset($_COOKIE[$cookieName]))
-            $this->Token = $_COOKIE[$cookieName];
+            $this->Id = $_COOKIE[$cookieName];
         else
-            $this->Token = null;
+            $this->Id = null;
 
-        if (!is_null($this->Token))
-            $this->_getTenant();
+        if (!is_null($this->Id)) {
+            $this->_getCurrentSession();
+            $this->_getCurrentUser();
+        }
     }
 
     // Check if the session exists
     public function DoesSessionExist() {
-        $isNull = is_null($this->Token);
+        $isNull = is_null($this->Session);
 
         if (!$isNull) {
-            if (time() > $this->Expiration)
+            if (time() > $this->Session->Expiration)
             {
                 $this->DestroySession();
                 return false;
             }
         }
+
         return !$isNull;
     }
 
 
-    private function _getTenant() {
-        $result = $this->db->query("SELECT TenantID, Expiration from sessions WHERE Token=?", [
-            $this->Token
-        ]);
-        $result = $result[0];
-
-        $this->Expiration = $result['Expiration'];
-
-        $this->TenantID = $result['TenantID'];
-
-        $tenantQry = $this->db->Query("Select Id, FirstName, LastName, StartDate, EndDate, username, Permissions
-            FROM tenants WHERE Id=?", [ $this->TenantID ]);
-        $tenant = $tenantQry[0];
-        $this->Tenant = $tenant;
-        $this->Tenant['Permissions'] = explode(",", $this->Tenant['Permissions']);
-        $this->Username = $tenant['username'];
-    }
 
     // For making the session manager singleton
     private static $instance;
     public static function GetSession() {
+        self::_cleanDatabase();
+
         if (!isset(self::$instance))
             self::$instance = new SessionManager();
-
-        self::_cleanDatabase();
 
         return self::$instance;
     }
 
     // Creates a new session
-    public static function CreateSession($tenantID, $longRunning = False) {
+    public static function CreateSession($username, $longRunning = False) {
         global $cookieName;
-        $db = database();
 
-        $sessionID = Guid::NewGuid();
+        $sessions = self::_getAllSessions();
+
+        // Make a new session
+        $sessionId = Guid::NewGuid();
         $expiration = time() + (86400 * ($longRunning ? 15 : 5));
+        $session = [
+            'Id' => $sessionId,
+            'Expiration' => $expiration,
+            'Username' => $username
+        ];
 
-        $db->query("INSERT INTO sessions (Token, TenantID, Expiration) VALUES (?, ?, ?)", [
-            $sessionID,
-            $tenantID,
-            $expiration
-        ]);
+        array_push($sessions, $session);
+        ObjectStore::Save('app', 'sessions', $sessions);
 
-        $_COOKIE[$cookieName] = $sessionID;
-        setcookie($cookieName, $sessionID, $expiration, "/", $_SERVER['SERVER_NAME'], True, True);
+        $_COOKIE[$cookieName] = $sessionId;
+        setcookie($cookieName, $sessionId, $expiration, "/", $_SERVER['SERVER_NAME'], True, True);
 
         self::$instance = null;
         return self::GetSession();
@@ -104,18 +97,65 @@ class SessionManager {
         setcookie($cookieName, null, -1, "/", $_SERVER['SERVER_NAME'], True, True);
 
         // Delete from database
-        $this->db->query("DELETE FROM sessions WHERE Token=?", [$this->Token]);
+        foreach ($this->Sessions as $i => $session) {
+            if ($session->Id == $this->Session->Id)
+            {
+                unset($this->Sessions[$i]);
+                break;
+            }
+        }
+        ObjectStore::Save('app', 'sessions', $this->Sessions);
 
-        $this->Token = null;
-        $this->User = null;
-        $this->TenantID = null;
-        $this->User = 'Anonymous';
+        $this->Session = null;
+        $this->CurrentUser = null;
+    }
+
+
+    // Gets and saves the current session
+    private function _getCurrentSession() {
+        $this->Sessions = ObjectStore::Get('app', 'sessions');
+
+        foreach ($this->Sessions as $session) {
+            if ($session->Id == $this->Id) {
+                $this->Session = $session;
+                return;
+            }
+        }
+    }
+
+    private function _getCurrentUser() {
+        if (is_null($this->Session))
+            return;
+
+        $user = ObjectStore::Get('identities', $this->Session->Username);
+        if (is_null($user))
+            return;
+
+        $this->CurrentUser = ObjectStore::Get('tenants', $user->TenantId);
+        if (is_null($this->CurrentUser))
+            return;
+
+        $this->CurrentUser->Permissions = $user->Permissions;
+    }
+
+    private static function _getAllSessions() {
+        $sessions = ObjectStore::Get('app', 'sessions');
+        if (is_null($sessions))
+            return [];
+        return $sessions;
     }
 
     // Removes old sessions
     private static function _cleanDatabase() {
         $now = time();
-        $db = database();
-        $db->query("DELETE FROM sessions WHERE Expiration <= ?", [ $now ]);
+
+        $sessions = ObjectStore::Get('app', 'sessions');
+        foreach ($sessions as $i => $session) {
+            if ($session->Expiration <= $now)
+                unset($sessions[$i]);
+        }
+
+        ObjectStore::Save('app', 'sessions', $sessions);
     }
+
 }

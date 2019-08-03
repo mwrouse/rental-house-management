@@ -68,30 +68,60 @@
                 <tr>
                     <th>Bill</th>
                     <th>Due Date</th>
-                    <th>Amount</th>
+                    <th>Remaining</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody data-bind="foreach: Bills">
-                <tr data-toggle="collapse" data-bind="attr: { class: $parent.GetBillRowClass($data) }">
-                    <td data-bind="text: Title"></td>
-                    <td data-bind="text: DueDate"></td>
-                    <td data-bind="text: $parent.GetBillAmount($data)"></td>
-                    <td style="background-color:#fff">
-                        <button class="btn btn-primary" data-bind="click: $parent.PayBill"><i class="fas fa-dollar-sign"></i>&nbsp;Pay</button>
-                        <!-- ko if: $root.System.DoesUserHaveAccess('delete_bills') -->
-                        <button class="btn btn-danger"><i class="fas fa-trash"></i>&nbsp;Delete</button>
-                        <!-- /ko -->
-                    </td>
-                </tr>
-            </tbody>
+            <!-- ko foreach: Bills -->
+                <tbody>
+                    <tr data-toggle="collapse" data-bind="attr: { class: $parent.GetBillRowClass($data), 'data-target': $parent.GetBillCollapseId($data, true) }">
+                        <td data-bind="text: Title"></td>
+                        <td data-bind="text: DueDate + ' (' + $parent.GetNumberOfDaysUntilBillIsDue($data) + ' days)'"></td>
+                        <td data-bind="text: $parent.GetBillRemaining($data)"></td>
+                        <td>
+                            <button class="btn btn-primary" data-bind="click: $parent.PayBill"><i class="fas fa-dollar-sign"></i>&nbsp;Pay</button>
+                            <!-- ko if: $root.System.DoesUserHaveAccess('delete_bills') -->
+                            <button class="btn btn-danger"><i class="fas fa-trash"></i>&nbsp;Delete</button>
+                            <!-- /ko -->
+                        </td>
+                    </tr>
+                </tbody>
+                <tbody data-bind="attr: { id: $parent.GetBillCollapseId($data) }, foreach: Payments" class="table-sm collapse">
+                    <tr>
+                        <td data-bind="text: $root.GetPaymentString($data)" colspan="10"></td>
+                    </tr>
+                </tbody>
+            <!-- /ko -->
         </table>
     </div>
 <!-- /ko -->
 
 <!-- ko if: $root.System.IsOnPage('bills/pay') -->
     <!-- ko with: GetActiveBillForPage -->
-        <h1 class="h1 mb-2 text-gray-800">Pay</h1>
+        <!-- ko ifnot: $parent.DoesActiveBillApplyToUser -->
+        <br/>
+        <div class="alert alert-warning" role="alert">
+                You are not required to pay this bill.
+            </div>
+        <!-- /ko -->
+
+        <h1 class="h1 mb-2 text-gray-800" data-bind="text: Title">Pay</h1>
+
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="bill-payment-form">
+                    <div class="bill-payment-title">
+                        <h3 data-bind="text: 'Remaining: ' + $parent.GetBillRemaining($data)"></h3>
+                        <h3 data-bind="text: 'Split: ' + $parent.GetBillSplitAmountFormatted($data)"></h3>
+                    </div>
+                    <form>
+                        <input class="form-control" type="hidden" name="bill-id" data-bind="value: Id">
+
+                    </form>
+                </div>
+            </div>
+        </div>
+
     <!-- /ko -->
 <!-- /ko -->
 </div>

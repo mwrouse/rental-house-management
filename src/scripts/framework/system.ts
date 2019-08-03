@@ -9,7 +9,7 @@ class System {
 
     public WhenReady: JQueryPromise<any>;
     private _readyDfd: JQueryDeferred<any>;
-    private _Hash: KnockoutObservable<string> = ko.observable('');
+    public Hash: KnockoutObservable<string> = ko.observable('');
 
     constructor() {
         this._readyDfd = $.Deferred<any>();
@@ -25,9 +25,9 @@ class System {
             this._ping();
         }, 60000 * 5);
 
-        this._Hash(window.location.hash.replace('#!/', ''));
+        this.Hash(window.location.hash.replace('#!/', ''));
         window.addEventListener('hashchange', () => {
-            this._Hash(window.location.hash.replace('#!/', ''));
+            this.Hash(window.location.hash.replace('#!/', ''));
         });
     }
 
@@ -44,7 +44,7 @@ class System {
     // Used for checking hashes
     public IsOnPage = (hash: any): KnockoutComputed<boolean> => {
         return ko.computed<boolean>(() => {
-            let pageHash = this._Hash();
+            let pageHash = this.Hash();
 
             if (typeof(hash) == 'string')
                 return pageHash === hash;

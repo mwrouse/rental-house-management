@@ -62,15 +62,28 @@ class BillsViewModel {
         return '$' + numberWithCommas(bill.Amount);
     };
 
+    public GetBillRemaining = (bill: IBill): string => {
+        return '$' + numberWithCommas(bill.Remaining);
+    };
+
+    public GetBillSplitAmount = (bill: IBill): number => {
+        if (bill.AppliesTo.length == 0)
+            return bill.Amount;
+        return bill.Amount / bill.AppliesTo.length;
+    };
+    public GetBillSplitAmountFormatted = (bill: IBill): string => {
+        return '$' + numberWithCommas(this.GetBillSplitAmount(bill))
+    };
+
 
     public GetBillRowClass = (bill: IBill): KnockoutComputed<string> => {
         return ko.computed(() => {
             let days = this.GetNumberOfDaysUntilBillIsDue(bill);
 
             if (days < 0)
-                return "bill-red";
+                return "table-danger";
             else if (days < 5)
-                return "bill-yellow";
+                return "table-warning";
 
             return "";
         });
@@ -84,6 +97,15 @@ class BillsViewModel {
         return days
     };
 
+
+    public GetBillCollapseId = (bill: IBill, hash: boolean = false) => {
+        return (hash?'#':'') + 'collapse-bill-' + bill.Id;
+    };
+
+    public GetPaymentString = (payment: IPayment) => {
+        return payment.PaidBy.AbbreviatedName + ' payed $' + numberWithCommas(payment.Amount) + ' on ' + payment.Date + '.';
+    }
+
     public ActiveBill: KnockoutObservable<IBill> = ko.observable(null);
     public PayBill = (bill: IBill): void => {
         this.ActiveBill(bill);
@@ -92,20 +114,31 @@ class BillsViewModel {
 
 
     // Gets the active bill that is used for subpages of the bill page
-    public GetActiveBillForPage = (): KnockoutComputed<IBill> => {
-        return ko.computed(() => {
-            let bill = this.ActiveBill();
-            if (bill == null)
-            {
+    public GetActiveBillForPage = ko.computed(() => {
+        let bill = this.ActiveBill();
+        if (bill == null)
+        {
+            if (system.Hash() != 'bills') {
                 console.warn('No active bill');
                 system.ChangeHash('bills');
-                return null;
             }
-            return bill;
-        });
-    }
+            return null;
+        }
+        return bill;
+    });
 
+    public DoesActiveBillApplyToUser = ko.computed(() =>{
+        let bill = this.ActiveBill();
+        if (bill == null)
+            return;
 
+        for (let tenantToPay of bill.AppliesTo)
+        {
+            if (tenantToPay == system.CurrentUser.Id)
+                return true;
+        }
+        return false;
+    });
 
 
 

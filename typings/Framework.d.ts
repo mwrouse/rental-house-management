@@ -36,11 +36,20 @@ interface IBill {
     Id: string;
     Title: string;
     Amount: number;
+    Remaining: number;
     DueDate: string;
     Creator: ITenant;
     FullyPaid: boolean;
+    AppliesTo: string[];
+    Payments: IPayment[];
 }
 
+interface IPayment {
+    Amount: number;
+    BillId: string;
+    Date: string;
+    PaidBy: ITenant;
+}
 interface ITenant {
     Id: string;
     FirstName: string;

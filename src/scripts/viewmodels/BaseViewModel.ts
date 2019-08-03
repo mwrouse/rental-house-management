@@ -14,7 +14,8 @@ class BaseViewModel {
     public IsLoading: KnockoutObservable<boolean> = ko.observable(true);
 
     constructor() {
-        let hash = window.location.hash.replace('#!/', '');
+        let hash = window.location.hash.replace('#!/', '').split('/')[0];
+        console.log(hash);
         for (let module of this.System.Modules) {
             if (module.Key == hash)
                 this.ActiveModule(module);

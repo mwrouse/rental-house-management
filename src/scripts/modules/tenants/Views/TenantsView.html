@@ -1,0 +1,28 @@
+<div id="TenantsView" data-bind="block: IsLoading">
+    <h1 class="h1 mb-2 text-gray-800">Tenants</h1>
+
+    <div class="table-responsive">
+            <table class="table table-bordered" id="billsTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Tenant</th>
+                        <th>Start Date</th>
+                        <th>Unpaid Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: Tenants">
+                    <tr>
+                        <td data-bind="text: Name"></td>
+                        <td data-bind="text: StartDate"></td>
+                        <td data-bind="">$0</td>
+                        <td style="background-color:#fff">
+                            <!-- ko if: $root.System.DoesUserHaveAccess('delete_tenants') -->
+                            <button class="btn btn-danger"  data-toggle="modal" data-target="#exampleModal"><i class="fas fa-trash"></i>&nbsp;Delete</button>
+                            <!-- /ko -->
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+</div>

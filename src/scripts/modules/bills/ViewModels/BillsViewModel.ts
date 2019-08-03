@@ -1,4 +1,4 @@
-import * as ko from "knockout";
+var ko = require('knockout');
 var system = require('system');
 
 function numberWithCommas(x) {
@@ -83,6 +83,30 @@ class BillsViewModel {
         var days = Math.floor(res / 86400);
         return days
     };
+
+    public ActiveBill: KnockoutObservable<IBill> = ko.observable(null);
+    public PayBill = (bill: IBill): void => {
+        this.ActiveBill(bill);
+        system.ChangeHash('bills/pay');
+    };
+
+
+    // Gets the active bill that is used for subpages of the bill page
+    public GetActiveBillForPage = (): KnockoutComputed<IBill> => {
+        return ko.computed(() => {
+            let bill = this.ActiveBill();
+            if (bill == null)
+            {
+                console.warn('No active bill');
+                system.ChangeHash('bills');
+                return null;
+            }
+            return bill;
+        });
+    }
+
+
+
 
 
     private _loadBills() {

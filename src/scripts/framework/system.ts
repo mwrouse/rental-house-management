@@ -1,17 +1,20 @@
 import * as ModuleLoader from "scripts/../modules/ModuleLoader";
-
+var ko: KnockoutStatic = require('knockout');
 
 class System {
     public Configuration: ISystemConfiguration = null;
     public Modules: IManifest[] = [];
     public CurrentUser: ITenant = null;
 
+
     public WhenReady: JQueryPromise<any>;
     private _readyDfd: JQueryDeferred<any>;
+    private _Hash: KnockoutObservable<string> = ko.observable('');
 
     constructor() {
         this._readyDfd = $.Deferred<any>();
         this.WhenReady = this._readyDfd.promise();
+
 
         this._beginLoad();
 
@@ -21,6 +24,11 @@ class System {
         setInterval(() => {
             this._ping();
         }, 60000 * 5);
+
+        this._Hash(window.location.hash.replace('#!/', ''));
+        window.addEventListener('hashchange', () => {
+            this._Hash(window.location.hash.replace('#!/', ''));
+        });
     }
 
 
@@ -33,7 +41,21 @@ class System {
         return false;
     };
 
+    // Used for checking hashes
+    public IsOnPage = (hash: any): KnockoutComputed<boolean> => {
+        return ko.computed<boolean>(() => {
+            let pageHash = this._Hash();
 
+            if (typeof(hash) == 'string')
+                return pageHash === hash;
+
+            return hash.match(pageHash) != null;
+        });
+    }
+
+    public ChangeHash = (hash: any): void => {
+        window.location.hash = '#!/' + hash;
+    };
 
     /**
      * Loading

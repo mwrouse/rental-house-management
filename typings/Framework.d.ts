@@ -28,6 +28,9 @@ interface ISystem {
     DoesUserHaveAccess(feature: string): boolean;
 }
 
+interface IModalBuilder {
+
+}
 
 interface IBill {
     Id: string;

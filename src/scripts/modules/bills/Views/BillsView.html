@@ -53,9 +53,11 @@
 
     <div class="row">
         <div class="col-xl-3 col-md-6 mb-4">
+            <!-- ko if: $root.System.DoesUserHaveAccess('add_bills') -->
             <button type="button" class="btn btn-success">
                 <i class="fas fa-plus"></i>&nbsp;New Bill
             </button>
+            <!-- /ko -->
         </div>
     </div>
 

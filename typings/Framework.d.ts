@@ -2,7 +2,8 @@ interface IManifest {
     Title: string;
     NavIcon: string;
     Key: string;
-    DemandPermission?: string;
+    AssociatedPermissions: string[]; // Permissions for showing in the UI
+    DemandPermission?: string; // Permission needed to see the module
 }
 
 interface IModuleLoader {

@@ -74,3 +74,8 @@ interface IPaymentMethod {
     Key: string;
     Source: string;
 }
+
+
+interface IPaymentHandler {
+
+}

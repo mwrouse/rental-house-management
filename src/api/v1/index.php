@@ -101,7 +101,7 @@ $Router->Get('/bills/{id}', function($id) {
   $bill->CreatedBy = $tenant->Data;
 
   // Retrieve the payment target
-  $target = $Router->RunLocal('GET', sprintf('/targets/%s', $bill->PayTo));
+  $target = $Router->RunLocal('GET', sprintf('/recipients/%s', $bill->PayTo));
   if (!is_null($target))
     $bill->PayTo = $target->Data;
 

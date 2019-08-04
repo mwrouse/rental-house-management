@@ -191,7 +191,9 @@ class BillsViewModel {
     });
 
 
-    public MakeBillPayment = (bill: IBill) => {
+    public MakeBillPayment = (method: IPaymentMethod) => {
+        let bill = this.ActiveBill();
+
         let amountEl = document.getElementById('paymentAmount') as HTMLInputElement;
         let amount = amountEl.value;
 
@@ -207,6 +209,8 @@ class BillsViewModel {
             this.ActiveBill(null);
             system.ChangeHash('bills');
             this.IsLoading(false);
+
+            system.PaymentHandler.HandlePayment(amount, method, bill);
         });
         amountEl.value = null;
 

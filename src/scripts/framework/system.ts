@@ -1,9 +1,12 @@
 import * as ModuleLoader from "scripts/../modules/ModuleLoader";
+import * as PaymentHandler from "scripts/../framework/paymentHandler";
+
 var ko: KnockoutStatic = require('knockout');
 
 class System {
     public Configuration: ISystemConfiguration = null;
     public Modules: IManifest[] = [];
+    public PaymentHandler: IPaymentHandler = PaymentHandler;
 
     public Tenants: KnockoutObservableArray<ITenant> = ko.observableArray([]);
     public Recipients: KnockoutObservableArray<any> = ko.observableArray([]);

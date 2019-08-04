@@ -5,11 +5,15 @@
  */
 
 function replaceUrlParameters(url: string, amount: number, bill: IBill) {
-    url = url.replace('{amount}', amount.toString());
-    url = url.replace('{billId}', bill.Id);
+    let replace = (u, n, v) => { return u.replace(n, encodeURIComponent(v)); };
+
+    url = replace(url, '{amount}', amount.toString());
+    url = replace(url, '{billId}', bill.Id);
+    url = replace(url, '{billName}', bill.Title);
 
     return url;
 }
+
 
 let paymentMethods = [
     {
@@ -17,6 +21,12 @@ let paymentMethods = [
         handle: (amount: number, method: IPaymentMethod, bill: IBill) => {
             let url = replaceUrlParameters(method.Source, amount, bill);
             window.open(url, '_blank');
+        }
+    }
+    , {
+        key: 'venmo',
+        handle: (amount: number, method: IPaymentMethod, bill: IBill) => {
+            let url = replaceUrlParameters(method.Source, amount, bill);
         }
     }
 ];

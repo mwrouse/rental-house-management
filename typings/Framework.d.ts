@@ -72,6 +72,7 @@ interface IRecipient {
 
 interface IPaymentMethod {
     Key: string;
+    Display: string;
     Source: string;
 }
 

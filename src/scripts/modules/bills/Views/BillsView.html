@@ -55,7 +55,7 @@
     <div class="row">
         <div class="col-xl-3 col-md-6 mb-4">
             <!-- ko if: $root.System.DoesUserHaveAccess('add_bills') -->
-            <button type="button" class="btn btn-success">
+            <button type="button" class="btn btn-success" data-bind="click: GoToNewBillPage">
                 <i class="fas fa-plus"></i>&nbsp;New Bill
             </button>
             <!-- /ko -->
@@ -122,7 +122,7 @@
             <form>
                 <div class="form-group">
                     <label for="paymentAmount">Amount Paid</label>
-                    <input id="paymentAmount" class="form-control form-control-lg" type="number" placeholder="0.00" step="0.01" name="amount">
+                    <input id="paymentAmount" class="form-control form-control-lg" type="number" placeholder="0.00" step="0.01" name="amount" data-bind="value: $parent.DefaultPaymentAmount">
                 </div>
                 <div class="form-group">
                     <button type="button" class="btn btn-primary form-control" data-bind="click: $parent.MakeBillPayment">Pay</button>
@@ -135,6 +135,53 @@
 
 
 <!-- ko if: $root.System.IsOnPage('bills/new') -->
+    <div class="new-bill-screen" style="text-align: center">
+            <h1 class="h1 mb-2 text-gray-800">New Bill</h1>
+
+            <div class="new-bill-form">
+                <div class="form-group row">
+                    <label for="billName" class="col-sm-3 col-form-label">Name</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" type="text" id="billName" placeholder="Rent">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="billDueDate" class="col-sm-3 col-form-label">Due Date</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" type="date" id="billDueDate" >
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="billAmount" class="col-sm-3 col-form-label">Amount</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" type="number" placeholder="0.00" step="0.01" id="billAmount">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="appliesTo" class="col-sm-3 col-form-label">Applies To</label>
+                    <div class="col-sm-6" data-bind="foreach: $root.System.Tenants" style="text-align: left">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="appliesTo" data-bind="value: Id, attr: { id: Id }">
+                            <label class="form-check-label" data-bind="html: AbbreviatedName, attr: { for: Id }"></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="payTo" class="col-sm-3 col-form-label">Pay To</label>
+                    <div class="col-sm-6">
+                        <select class="form-control" id="payTo">
+                            <option selected>Choose...</option>
+                            <!-- ko foreach: $root.System.Recipients -->
+                                <option data-bind="value: Id, text: Name"></option>
+                            <!-- /ko -->
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-primary form-control" data-bind="click: SubmitNewBill">Create</button>
+                </div>
+            </div>
+    </div>
 <!-- /ko -->
 
 </div>

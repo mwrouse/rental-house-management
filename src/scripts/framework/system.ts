@@ -4,6 +4,10 @@ var ko: KnockoutStatic = require('knockout');
 class System {
     public Configuration: ISystemConfiguration = null;
     public Modules: IManifest[] = [];
+
+    public Tenants: KnockoutObservableArray<ITenant> = ko.observableArray([]);
+    public Recipients: KnockoutObservableArray<any> = ko.observableArray([]);
+
     public CurrentUser: ITenant = null;
 
 
@@ -14,7 +18,6 @@ class System {
     constructor() {
         this._readyDfd = $.Deferred<any>();
         this.WhenReady = this._readyDfd.promise();
-
 
         this._beginLoad();
 
@@ -64,6 +67,8 @@ class System {
         this._loadCurrentUser()
             .then(this._loadConfiguration)
             .then(this._loadModules)
+            .then(this._loadTenants)
+            .then(this._loadRecipients)
             .then(() => {
                 this._readyDfd.resolve();
             });
@@ -109,6 +114,28 @@ class System {
             this.CurrentUser = raw.Data as ITenant;
             dfd.resolve();
         });
+        return dfd.promise();
+    };
+
+    private _loadTenants = (): JQueryPromise<any> => {
+        let dfd = $.Deferred<any>();
+
+        $.get('/api/v1/tenants', (data: any) => {
+            let tenants: ITenant[] = data.Data;
+            this.Tenants(tenants);
+            dfd.resolve();
+        });
+        return dfd.promise();
+    };
+
+    private _loadRecipients = (): JQueryPromise<any> => {
+        let dfd = $.Deferred<any>();
+        $.get('/api/v1/recipients', (data: any) => {
+            let recipients = data.Data;
+            this.Recipients(recipients);
+            dfd.resolve();
+        });
+        dfd.resolve();
         return dfd.promise();
     };
 

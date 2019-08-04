@@ -130,7 +130,7 @@ class BillsViewModel {
         let bill = this.ActiveBill();
         if (bill == null)
         {
-            if (system.Hash() != 'bills') {
+            if (system.Hash() == 'bills/pay') {
                 console.warn('No active bill');
                 system.ChangeHash('bills');
             }
@@ -182,6 +182,14 @@ class BillsViewModel {
         return 'You have already paid $' + numberWithCommas(amountAlreadyPaid) + ' to this bill. You have $' + numberWithCommas(remaining) + ' remaining.';
     };
 
+    public DefaultPaymentAmount = ko.computed(() => {
+        let bill = this.ActiveBill();
+        if (bill == null)
+            return 0.00;
+
+        return 5.00;
+    });
+
 
     public MakeBillPayment = (bill: IBill) => {
         let amountEl = document.getElementById('paymentAmount') as HTMLInputElement;
@@ -205,6 +213,51 @@ class BillsViewModel {
         return dfd.promise();
     };
 
+
+    public GoToNewBillPage = (): void => {
+        system.ChangeHash('bills/new');
+    };
+
+
+    public SubmitNewBill = (): JQueryPromise<any> => {
+        let dfd = $.Deferred<any>();
+        this.IsLoading(true);
+
+        let nameEl = document.getElementById('billName') as HTMLInputElement;
+        let dueEl = document.getElementById('billDueDate') as HTMLInputElement;
+        let amountEl = document.getElementById('billAmount') as HTMLInputElement;
+        let payToEl = document.getElementById('payTo') as HTMLSelectElement;
+        let appliesToEls = document.getElementsByName('appliesTo') as NodeListOf<HTMLInputElement>;
+        let appliesTo = [];
+        appliesToEls.forEach(element => {
+            if (element.checked)
+                appliesTo.push(element.value);
+        });
+
+        let data = {
+            Title: nameEl.value,
+            Amount: amountEl.value,
+            DueDate: dueEl.value,
+            AppliesTo: appliesTo,
+            PayTo: payToEl.value,
+        };
+
+        $.post('/api/v1/bills/new', data)
+            .done(() => {
+                this.IsLoading(false);
+                system.ChangeHash('bills');
+                nameEl.value = null;
+                dueEl.value = null;
+                amountEl.value = null;
+                payToEl.value = null;
+                appliesToEls.forEach((element) => {
+                    element.checked = false;
+                });
+            });
+
+        return dfd.promise();
+    };
+
     private _loadBills() {
         let dfd = $.Deferred<any>();
 
@@ -216,6 +269,8 @@ class BillsViewModel {
         });
         return dfd.promise();
     }
+
+
 }
 
 export = BillsViewModel;

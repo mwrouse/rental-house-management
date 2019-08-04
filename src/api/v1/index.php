@@ -41,6 +41,18 @@ $Router->Get('/bills', function() {
  * Make a new bill
  */
 $Router->Post('/bills/new', function() {
+  $bill = [
+    'Id' => Guid::NewGuid(),
+    'Title' => $this->Data['Title'],
+    'Amount' => $this->Data['Amount'],
+    'DueDate' => $this->Data['DueDate'],
+    'AppliesTo' => $this->Data['AppliesTo'],
+    'CreatedBy' => $this->Session->CurrentUser->Id,
+    'CreationDate' => date('Y-m-d H:i:s'),
+    'PayTo' => $this->Data['PayTo']
+  ];
+
+  ObjectStore::Save('bills', $bill['Id'], $bill);
   /*global $Router;
 
   // TODO: Verify DueDate is an actual date
@@ -74,7 +86,7 @@ $Router->Post('/bills/new', function() {
   }
 
   $this->Abort('204', 'Could not create bill');*/
-})->RequiredData(['Title', 'Amount', 'DueDate', 'CreatorId', 'PayTo'])->Authenticate();
+})->RequiredData(['Title', 'Amount', 'DueDate', 'AppliesTo', 'PayTo'])->Authenticate();
 
 /**
  * Get a bill specific bill
@@ -90,7 +102,8 @@ $Router->Get('/bills/{id}', function($id) {
 
   // Retrieve the payment target
   $target = $Router->RunLocal('GET', sprintf('/targets/%s', $bill->PayTo));
-  $bill->PayTo = $target->Data;
+  if (!is_null($target))
+    $bill->PayTo = $target->Data;
 
   // Data Type Conversions
   $bill->Amount = floatval($bill->Amount);
@@ -294,7 +307,7 @@ $Router->Post('/tenants/{id}/edit', function($id) {
 
 
 /****************************
- *      Payment Targets     *
+ *      Payment Recipients     *
  ****************************/
 
  // TODO: Allow tenants to be targets
@@ -302,25 +315,25 @@ $Router->Post('/tenants/{id}/edit', function($id) {
 /**
  * Retrieve all targets
  */
-$Router->Get('/targets', function() {
-  /*global $Router;
+$Router->Get('/recipients', function() {
+  global $Router;
 
-  $db = database();
-  $rows = $db->Query("SELECT Id FROM payment_targets WHERE Archived=false");
+  $targetIds = ObjectStore::GetKeysForScope('recipient');
 
   $targets = [];
-  foreach ($rows as $row) {
-    $target = $Router->RunLocal('GET', '/targets/'.$row['Id']);
-    array_push($targets, $target->Data);
+  foreach ($targetIds as $targetId) {
+    $target = $Router->RunLocal('GET', sprintf('/recipients/%s', $targetId));
+    if (!is_null($target))
+      array_push($targets, $target->Data);
   }
 
-  return $targets;*/
+  return $targets;
 })->Authenticate();
 
 /**
  * Create a target
  */
-$Router->Post('/targets/new', function() {
+$Router->Post('/recipients/new', function() {
   /*global $Router;
 
   $id = uuid(); // Id for the new target
@@ -345,7 +358,11 @@ $Router->Post('/targets/new', function() {
 /**
  * Get a specific target
  */
-$Router->Get('/targets/{id}', function($id) {
+$Router->Get('/recipients/{id}', function($id) {
+  $target = ObjectStore::Get('recipient', $id);
+  if (is_null($target))
+    return null;
+  return $target;
   /*global $Router;
 
   $db = database();
@@ -382,7 +399,7 @@ $Router->Get('/targets/{id}', function($id) {
 /**
  * Update a target
  */
-$Router->Post('/targets/{id}/edit', function($id) {
+$Router->Post('/recipients/{id}/edit', function($id) {
   /*global $Router;
 
   // Confirm target exists and is not a tenant

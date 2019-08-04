@@ -42,6 +42,7 @@ interface IBill {
     FullyPaid: boolean;
     AppliesTo: string[];
     Payments: IPayment[];
+    PayTo: IRecipient;
 }
 
 interface IPayment {
@@ -50,6 +51,7 @@ interface IPayment {
     Date: string;
     PaidBy: ITenant;
 }
+
 interface ITenant {
     Id: string;
     FirstName: string;
@@ -60,4 +62,15 @@ interface ITenant {
     StartDate: string;
     EndDate: string;
     Permissions: string[];
+}
+
+interface IRecipient {
+    Id: string;
+    Name: string;
+    PaymentMethods: IPaymentMethod[];
+}
+
+interface IPaymentMethod {
+    Key: string;
+    Source: string;
 }

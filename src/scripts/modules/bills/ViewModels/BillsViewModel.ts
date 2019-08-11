@@ -201,6 +201,8 @@ class BillsViewModel {
 
         let dfd = $.Deferred<any>();
 
+        system.PaymentHandler.HandlePayment(amount, method, bill);
+
         $.post('/api/v1/bills/' + bill.Id + '/payments/new', {
             Amount: parseFloat(amount)
         })
@@ -208,9 +210,8 @@ class BillsViewModel {
             dfd.resolve();
             this.ActiveBill(null);
             system.ChangeHash('bills');
-            this.IsLoading(false);
 
-            system.PaymentHandler.HandlePayment(amount, method, bill);
+            this._loadBills();
         });
         amountEl.value = null;
 
@@ -248,8 +249,9 @@ class BillsViewModel {
 
         $.post('/api/v1/bills/new', data)
             .done(() => {
-                this.IsLoading(false);
                 system.ChangeHash('bills');
+
+                // Clear the form
                 nameEl.value = null;
                 dueEl.value = null;
                 amountEl.value = null;
@@ -257,6 +259,8 @@ class BillsViewModel {
                 appliesToEls.forEach((element) => {
                     element.checked = false;
                 });
+
+                this._loadBills();
             });
 
         return dfd.promise();
@@ -265,12 +269,16 @@ class BillsViewModel {
     private _loadBills() {
         let dfd = $.Deferred<any>();
 
+        this.Bills([]);
+        this.IsLoading(true);
+
         $.get('/api/v1/bills', (data: any) => {
             let bills: IBill[] = data.Data;
             this.Bills(bills);
             this.IsLoading(false);
             dfd.resolve();
         });
+
         return dfd.promise();
     }
 

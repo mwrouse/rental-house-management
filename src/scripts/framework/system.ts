@@ -9,7 +9,8 @@ class System {
     public PaymentHandler: IPaymentHandler = PaymentHandler;
 
     public Tenants: KnockoutObservableArray<ITenant> = ko.observableArray([]);
-    public Recipients: KnockoutObservableArray<any> = ko.observableArray([]);
+    public Recipients: KnockoutObservableArray<IRecipient> = ko.observableArray([]);
+    public Bills: KnockoutObservableArray<IBill> = ko.observableArray([]);
 
     public CurrentUser: ITenant = null;
 
@@ -33,7 +34,8 @@ class System {
 
         this.Hash(window.location.hash.replace('#!/', ''));
         window.addEventListener('hashchange', () => {
-            this.Hash(window.location.hash.replace('#!/', ''));
+            let hash = window.location.hash.replace('#!/', '');
+            this.Hash(hash);
         });
     }
 
@@ -141,7 +143,6 @@ class System {
         dfd.resolve();
         return dfd.promise();
     };
-
 
     private _ping = () => {
         $.get('/api/v1/auth/ping', (data: any) => {

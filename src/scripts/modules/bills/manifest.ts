@@ -4,6 +4,7 @@ let permissions = {
     'DeleteBills': 'delete_bills',
     'CreateBills': 'create_bills',
 };
+
 let allPermissions = [];
 for (let permission in permissions)
     allPermissions.push(permissions[permission]);

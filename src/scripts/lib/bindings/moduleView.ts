@@ -85,6 +85,11 @@ ko.bindingHandlers['moduleView'] = {
 
                 loadViewModel(moduleVMPath, manifest)
                     .done((vm: IViewModel) => {
+                        try {
+                            vm.OnShow();
+                        }
+                        catch (e) { }
+
                         ko.applyBindingsToDescendants(vm, element);
 
                         window.location.hash = '#!/' + manifest.Key;
@@ -93,9 +98,7 @@ ko.bindingHandlers['moduleView'] = {
                             try {
                                 vm.OnHide();
                             }
-                            catch (e) {
-
-                            }
+                            catch (e) { }
                         });
                     });
             });

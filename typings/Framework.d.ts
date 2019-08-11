@@ -13,6 +13,7 @@ interface IModuleLoader {
 interface IViewModel {
     OnLoad(): void;
     OnHide(): void;
+    OnShow(): void;
 }
 
 interface ISystemConfiguration {

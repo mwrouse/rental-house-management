@@ -81,7 +81,7 @@
                         <td>
                             <button class="btn btn-primary" data-bind="click: $parent.PayBill"><i class="fas fa-dollar-sign"></i>&nbsp;Pay</button>
                             <!-- ko if: $root.System.DoesUserHaveAccess('delete_bills') -->
-                            <button class="btn btn-danger"><i class="fas fa-trash"></i>&nbsp;Delete</button>
+                            <button class="btn btn-danger" data-bind="click: $parent.DeleteBill"><i class="fas fa-trash"></i>&nbsp;Delete</button>
                             <!-- /ko -->
                         </td>
                     </tr>

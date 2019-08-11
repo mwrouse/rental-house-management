@@ -3,7 +3,7 @@
  * PHP file for declaring routes
  */
 require_once('framework/include.php');
-
+require_once('permissions.php');
 
 header('Content-type: application/json');
 
@@ -35,7 +35,7 @@ $Router->Get('/bills', function() {
   }
 
   return $bills;
-})->Authenticate();
+})->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 
 /**
  * Make a new bill
@@ -86,7 +86,7 @@ $Router->Post('/bills/new', function() {
   }
 
   $this->Abort('204', 'Could not create bill');*/
-})->RequiredData(['Title', 'Amount', 'DueDate', 'AppliesTo', 'PayTo'])->Authenticate();
+})->RequiredData(['Title', 'Amount', 'DueDate', 'AppliesTo', 'PayTo'])->Authenticate()->RequiredPermissions(Permissions::$AddBills);
 
 /**
  * Get a bill specific bill
@@ -122,7 +122,7 @@ $Router->Get('/bills/{id}', function($id) {
   }
 
   return $bill;
-})->Authenticate();
+})->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 
 /**
  * Get list of payments for a bill
@@ -143,7 +143,7 @@ $Router->Get('/bills/{id}/payments', function($id) {
   }
 
   return $payments;
-})->Authenticate();
+})->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 
 
 /**
@@ -167,7 +167,7 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
 
   ObjectStore::Save('payments', $id, $payments);
 
-})->RequiredData(['Amount'])->Authenticate();
+})->RequiredData(['Amount'])->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 
 /**
  * Modify a bill
@@ -200,7 +200,12 @@ $Router->Post('/bills/{id}/edit', function($id) {
   $this->Abort('204', 'Could not update bill');*/
 })->RequiredData(['Title', 'DueDate', 'Amount'])->Authenticate();
 
-
+/**
+ * Removes a bill from the system
+ */
+$Router->Post('/bills/{id}/delete', function($id) {
+  ObjectStore::Delete('bills', $id);
+})->Authenticate()->RequiredPermissions(Permissions::$DeleteBills);
 
 
 /*****************************

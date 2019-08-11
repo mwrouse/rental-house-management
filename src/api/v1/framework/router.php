@@ -206,7 +206,7 @@ class Route {
 
           // Check if user has valid permissions
           if (count($this->_requiredPermissions) > 0) {
-            $permissions = $request->Session->Tenant['Permissions'];
+            $permissions = $request->Session->CurrentUser->Permissions;
             $matches = 0;
 
             foreach ($this->_requiredPermissions as $permission) {

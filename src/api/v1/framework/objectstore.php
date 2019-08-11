@@ -43,7 +43,6 @@ class ObjectStore {
         }
     }
 
-
     public static function GetKeysForScope($scope) {
         try {
             $db = database();
@@ -61,7 +60,6 @@ class ObjectStore {
             return [];
         }
     }
-
 
     public static function Save($scope, $key, $value) {
         try {
@@ -89,6 +87,23 @@ class ObjectStore {
         }
     }
 
+    public static function Delete($scope, $key) {
+        try {
+            if (self::DoesKeyExist($scope, $key))
+            {
+                $db = database();
+                $db->query("DELETE FROM object_store WHERE scope=? AND _key=?", [
+                    $scope,
+                    $key
+                ]);
+            }
+
+            return True;
+        }
+        catch (Exception $e) {
+            return False;
+        }
+    }
 
     public static function DoesKeyExist($scope, $key) {
         try {

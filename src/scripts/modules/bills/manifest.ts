@@ -2,7 +2,6 @@ let permissions = {
     'ViewBills': 'view_bills',
     'AddBills': 'add_bills',
     'DeleteBills': 'delete_bills',
-    'CreateBills': 'create_bills',
 };
 
 let allPermissions = [];

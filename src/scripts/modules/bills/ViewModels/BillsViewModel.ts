@@ -124,6 +124,16 @@ class BillsViewModel {
         system.ChangeHash('bills/pay');
     };
 
+    // Removes a bill
+    public DeleteBill = (bill: IBill): void => {
+        $.post('/api/v1/bills/' + bill.Id + '/delete')
+        .done(() => {
+            //dfd.resolve();
+            //this.ActiveBill(null);
+            this._loadBills();
+        });
+    };
+
 
     // Gets the active bill that is used for subpages of the bill page
     public GetActiveBillForPage = ko.computed(() => {

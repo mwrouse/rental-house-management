@@ -21,10 +21,14 @@
 
         <!-- ko foreach: System.Modules -->
           <li class="nav-item" data-bind="click: $root.ChangeView, css: { active: $root.ActiveModule().Key == $data.Key }">
-              <a href="#" class="nav-link"><i data-bind="attr: { class: 'fa ' + NavIcon }"></i> <span data-bind="text: Title"></span></a>
+              <a href="#" class="nav-link">
+                <i data-bind="attr: { class: 'fa ' + NavIcon }"></i>
+                <span data-bind="text: Title"></span>
+              </a>
           </li>
         <!-- /ko -->
       </ul>
+
 
       <!-- Content Wrapper -->
       <div id="content-wrapper" class="d-flex flex-column" data-bind="block: IsLoading">

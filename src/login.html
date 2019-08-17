@@ -61,6 +61,21 @@
         <script src="scripts/lib/bootstrap.js"></script>
         <script src="scripts/lib/sb-admin-2.js"></script>
         <script>
+           function GetURLParameter (paramName, url = window.location.href) {
+              if (url == undefined)
+                url = window.location.href;
+
+              let param = '';
+
+              var regex = new RegExp("[?&]" + paramName + "(=([^&]*)|&|#|$)"),
+                results = regex.exec(url);
+
+              if (results && results[2])
+                param = decodeURIComponent(results[2].replace(/\+/g, " "));
+
+              return param;
+            }
+
             window.addEventListener('load', function(){
                 var loginBtn = document.getElementById('loginBtn');
                 var usernameInput = document.getElementById('username');
@@ -76,7 +91,7 @@
                     $.post('/api/v1/auth/login', data, (result) => {
                         console.log(result.Data);
                         if (result.Data === true)
-                            window.location = '/';
+                            window.location = '/' + GetURLParameter('path');
                         else
                             console.error('invalid login');
                     });

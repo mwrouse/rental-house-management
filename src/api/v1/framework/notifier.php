@@ -49,7 +49,7 @@ class Notifier {
         $msg = $actor->AbbreviatedName . " paid $" . $amount . " to '" . $bill->Title . "' \n";
         $msg .= "Remaining: $" . strval($bill->Remaining) . " \n";
         $msg .= "\nRemaining Per Person:\n";
-        error_log($_SERVER['HTTP_HOST']);
+
         // Mark down who has paid what
         foreach ($bill->AppliesTo as $appliesTo) {
             $msg .= $appliesTo->AbbreviatedName . ": $" . strval($appliesTo->Remaining) . "\n";

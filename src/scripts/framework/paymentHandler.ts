@@ -27,6 +27,7 @@ let paymentMethods = [
         key: 'venmo',
         handle: (amount: number, method: IPaymentMethod, bill: IBill) => {
             let url = replaceUrlParameters(method.Source, amount, bill);
+            window.open(url, '_blank');
         }
     }
 ];

@@ -38,6 +38,10 @@ class Payment {
         foreach ($raw as $payment)
             array_push($final, Payment::Parse($payment));
 
+        usort($final, function($b1, $b2) {
+            return strcmp($b2->Date, $b1->Date);
+        });
+
         return $final;
     }
 }

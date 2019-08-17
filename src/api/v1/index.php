@@ -106,7 +106,7 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
     'BillId' => $id,
     'Amount' => $this->Data['Amount'],
     'PaidBy' => $this->Session->CurrentUser->Id,
-    'Date' => date('Y-m-d')
+    'Date' => date('Y-m-d H:i:s')
   ];
 
   array_push($bill->Payments, Payment::Parse($payment));

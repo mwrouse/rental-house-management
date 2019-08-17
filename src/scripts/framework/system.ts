@@ -165,7 +165,7 @@ class System {
     private _ping = () => {
         $.get('/api/v1/auth/ping', (data: any) => {
             if (!data.Data) {
-                window.location.href = '/login.html';
+                window.location.href = '/login.html?path=' + encodeURIComponent(window.location.hash);
             }
         });
     };

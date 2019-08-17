@@ -121,7 +121,7 @@ class BillsViewModel {
     };
 
     public GetPaymentString = (payment: IPayment) => {
-        return payment.PaidBy.AbbreviatedName + ' payed $' + numberWithCommas(payment.Amount) + ' on ' + payment.Date + '.';
+        return payment.PaidBy.AbbreviatedName + ' paid $' + numberWithCommas(payment.Amount) + ' on ' + payment.Date + '.';
     }
 
     public ActiveBill: KnockoutObservable<IBill> = ko.observable(null);

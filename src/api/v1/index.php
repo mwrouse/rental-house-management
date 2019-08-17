@@ -25,7 +25,27 @@ $Router->SetParameters([
  */
 $Router->Get('/bills', function() {
   $bills = Bill::GetAll();
-  return $bills;
+
+  $final = [];
+  foreach ($bills as $bill) {
+    $found = false;
+    foreach ($bill->AppliesTo as $appliesTo)
+    {
+      if ($appliesTo->Id == $this->Session->CurrentUser->Id)
+      {
+        array_push($final, $bill);
+        $found = true;
+        break;
+      }
+    }
+
+    if (!$found) {
+      if ($bill->CreatedBy->Id == $this->Session->CurrentUser->Id)
+        array_push($final, $bill);
+    }
+  }
+
+  return $final;
 })->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 
 /**

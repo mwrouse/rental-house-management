@@ -34,7 +34,13 @@ class BillsViewModel {
 
         for (let i = 0; i < bills.length; i++) {
             let bill: IBill = bills[i];
-            cost += bill.Remaining;
+            for (let appliesTo of bill.AppliesTo) {
+                if (appliesTo.Id == system.CurrentUser.Id)
+                {
+                    cost += appliesTo.Remaining;
+                    break;
+                }
+            }
         }
 
         return '$' + numberWithCommas(cost);
@@ -190,18 +196,29 @@ class BillsViewModel {
     });
 
     public GetAmountPaidByUser = (bill: IBill): number => {
-        let total = 0;
-        for (let payment of bill.Payments) {
-            if (payment.PaidBy.Id == system.CurrentUser.Id)
-                total += payment.Amount;
+        for (let appliesTo of bill.AppliesTo) {
+            if (appliesTo.Id == system.CurrentUser.Id) {
+                return appliesTo.Paid;
+            }
         }
-        return total;
+
+        return 0;
+    };
+
+    public GetRemainingAmountByUser = (bill: IBill, format: boolean = false): any => {
+        for (let appliesTo of bill.AppliesTo) {
+            if (appliesTo.Id == system.CurrentUser.Id) {
+                return (format) ? '$' + numberWithCommas(appliesTo.Remaining) : appliesTo.Remaining;
+            }
+        }
+
+        return (format) ? "N/A" : 0;
     };
 
     public GetUserAlreadyPaidNotice = (bill: IBill): string => {
         let split = this.GetBillSplitAmount(bill);
         let amountAlreadyPaid = this.GetAmountPaidByUser(bill);
-        let remaining = split - amountAlreadyPaid;
+        let remaining = this.GetRemainingAmountByUser(bill);
 
         return 'You have already paid $' + numberWithCommas(amountAlreadyPaid) + ' to this bill. You have $' + numberWithCommas(remaining) + ' remaining.';
     };

@@ -116,16 +116,30 @@ class Bill {
 
         $bill->Payments = Payment::Get($bill->Id);
 
+
         // Calculate the remaining amount
+        $payments = [];
         $bill->Remaining = $bill->Amount;
         foreach ($bill->Payments as $payment)
+        {
             $bill->Remaining = $bill->Remaining - $payment->Amount;
+            $payments[$payment->PaidBy->Id] += $payment->Amount;
+        }
 
         // Calculate split
         if (count($bill->AppliesTo) > 0)
             $bill->Split = floatval($bill->Amount / count($bill->AppliesTo));
         else
             $bill->Split = $bill->Amount;
+
+        foreach ($bill->AppliesTo as $appliesTo) {
+            if (!array_key_exists($appliesTo->Id, $payments))
+                $appliesTo->Paid = 0;
+            else
+                $appliesTo->Paid = $payments[$appliesTo->Id];
+
+            $appliesTo->Remaining = $bill->Split - $appliesTo->Paid;
+        }
 
         return $bill;
     }

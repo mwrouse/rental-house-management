@@ -8,7 +8,7 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                 <div class="col mr-2">
-                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Remaining</div>
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">You owe</div>
                     <div class="h3 mb-0 font-weight-bold text-gray-800" data-bind="text: TotalRemaining"></div>
                 </div>
                 <div class="col-auto">
@@ -68,7 +68,8 @@
                 <tr>
                     <th>Bill</th>
                     <th>Due Date</th>
-                    <th>Remaining</th>
+                    <th>Total Remaining</th>
+                    <th>Your Remaining</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -78,6 +79,7 @@
                         <td data-bind="text: Title"></td>
                         <td data-bind="text: DueDate + ' (' + $parent.GetNumberOfDaysUntilBillIsDue($data) + ' days)'"></td>
                         <td data-bind="text: $parent.GetBillRemaining($data)"></td>
+                        <td data-bind="text: $parent.GetRemainingAmountByUser($data, true)"></td>
                         <td class="bill-actions">
                             <button class="btn btn-primary" data-bind="click: $parent.PayBill"><i class="fas fa-dollar-sign"></i>&nbsp;Pay</button>
                             <!-- ko if: $root.System.DoesUserHaveAccess('delete_bills') -->

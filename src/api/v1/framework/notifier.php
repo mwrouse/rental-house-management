@@ -46,20 +46,12 @@ class Notifier {
         $twilio = getTwilioClient();
 
         $msg = $actor->AbbreviatedName . " paid $" . $amount . " to '" . $bill->Title . "' \n";
-        $msg .= "Remaining: $" . $bill->Remaining . " \n";
+        $msg .= "Remaining: $" . strval($bill->Remaining) . " \n";
         $msg .= "\nRemaining Per Person:\n";
 
         // Mark down who has paid what
         foreach ($bill->AppliesTo as $appliesTo) {
-            $msg .= $appliesTo->AbbreviatedName . ": $";
-            $amt = 0;
-
-            foreach ($bill->Payments as $payment) {
-                if ($payment->PaidBy->Id == $appliesTo->Id)
-                    $amnt += $payment->Amount;
-            }
-
-            $msg .= strval($bill->Split - $amnt) . "\n";
+            $msg .= $appliesTo->AbbreviatedName . ": $" . strval($appliesTo->Remaining) . "\n";
         }
 
         // Get phone numbers to send this to
@@ -86,6 +78,9 @@ class Notifier {
 
         foreach ($to as $number)
         {
+            if ($number == "" || is_null($number))
+                continue;
+
             try {
                 $msg = $twilio->service->messages
                                         ->create($number,

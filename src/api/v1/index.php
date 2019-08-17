@@ -70,7 +70,6 @@ $Router->Get('/bills/{id}/payments', function($id) {
   global $Router;
 
   $payments = Payment::Get($id);
-
   return $payments;
 })->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 
@@ -81,9 +80,7 @@ $Router->Get('/bills/{id}/payments', function($id) {
 $Router->Post('/bills/{id}/payments/new', function($id) {
   global $Router;
 
-  $payments = ObjectStore::Get('payments', $id);
-  if (is_null($payments))
-    $payments = [];
+  $bill = Bill::Get($id);
 
   $payment = [
     'BillId' => $id,
@@ -92,10 +89,10 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
     'Date' => date('Y-m-d')
   ];
 
-  array_push($payments, $payment);
+  array_push($bill->Payments, Payment::Parse($payment));
+  $bill->Save();
 
-  ObjectStore::Save('payments', $id, $payments);
-
+  return Payment::Get($id);
 })->RequiredData(['Amount'])->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 
 /**

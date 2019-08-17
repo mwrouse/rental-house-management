@@ -69,6 +69,7 @@ class Bill {
             'Title' => $this->Title,
             'Amount' => $this->Amount,
             'FullyPaid' => $this->FullyPaid,
+            'DueDate' => $this->DueDate,
             'CreationDate' => $this->CreationDate,
             'CreatedBy' => $this->CreatedBy->Id,
             'AppliesTo' => array_map(function($p) { return $p->Id; }, $this->AppliesTo),
@@ -83,7 +84,7 @@ class Bill {
             return $p;
         }, $this->Payments);
 
-        ObjectStore::Save('payments', $payments);
+        ObjectStore::Save('payments', $this->Id, $payments);
 
         return $this;
     }

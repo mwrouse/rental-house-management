@@ -39,4 +39,16 @@ class Identity {
 
         return Identity::Parse($raw);
     }
+
+    public static function Delete($tenantId) {
+        $raw = ObjectStore::GetKeysForScope('identities');
+        foreach ($raw as $username) {
+            $ident = Identity::Get($username);
+            if ($ident->TenantId == $tenantId)
+            {
+                ObjectStore::Delete('identities', $username);
+                break;
+            }
+        }
+    }
 }

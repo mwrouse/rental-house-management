@@ -229,7 +229,7 @@ $Router->Post('/tenants/{id}/delete', function($id) {
   $tenant->EndDate = date('Y-m-d H:i:s');
 
   $tenant->Save();
-
+  Identity::Delete($tenant->Id);
 })->Authenticate()->RequiredPermissions(Permissions::$DeleteTenants);
 
 /****************************

@@ -6,3 +6,7 @@ require_once('utils.php');
 require_once('objectstore.php');
 require_once('router.php');
 require_once('session.php');
+
+require_once('events.php');
+require_once('notifier.php');
+require_once('logger.php');

@@ -41,6 +41,8 @@ $Router->Get('/bills', function() {
  * Make a new bill
  */
 $Router->Post('/bills/new', function() {
+  global $Router;
+
   $bill = [
     'Id' => Guid::NewGuid(),
     'Title' => $this->Data['Title'],
@@ -49,43 +51,17 @@ $Router->Post('/bills/new', function() {
     'AppliesTo' => $this->Data['AppliesTo'],
     'CreatedBy' => $this->Session->CurrentUser->Id,
     'CreationDate' => date('Y-m-d H:i:s'),
-    'PayTo' => $this->Data['PayTo']
+    'PayTo' => $this->Data['PayTo'],
+    'FullyPaid' => False
   ];
 
   ObjectStore::Save('bills', $bill['Id'], $bill);
-  /*global $Router;
 
-  // TODO: Verify DueDate is an actual date
+  // Get the saved bill to confirm it was added
+  $addedBill = $Router->RunLocal('GET', sprintf('/bills/%s', $bill['Id']));
 
-  // Verify that the tenant exists
-  $url = sprintf('/tenants/%s', $this->Data['CreatorId']);
-  $tenant = $Router->RunLocal('GET', $url);
-  if (is_null($tenant) || !isset($tenant->Data) || !is_null($tenant->Data['EndDate'])) {
-    $this->Abort('400', 'Invalid Tenant');
-  }
-
-  $id = uuid(); // ID for a new bill
-
-  // Tenant exists, create the bill
-  $db = database();
-  $result = $db->query("INSERT INTO bills (Id, Title, DueDate, CreatedBy, Amount, PayTo) VALUES (?, ?, ?, ?, ?, ?)", [
-    $id,
-    $this->Data['Title'],
-    $this->Data['DueDate'],
-    $tenant->Data['Id'],
-    $this->Data['Amount'],
-    $this->Data['PayTo']
-  ]);
-
-  // Verify that the bill was created
-  $url = sprintf('bills/%s', $id);
-  $check = $Router->RunLocal('GET', $url);
-
-  if (!is_null($check) && isset($check->Data)) {
-    return $check->Data;
-  }
-
-  $this->Abort('204', 'Could not create bill');*/
+  Notifier::NewBill($addedBill->Data, $this->Session->CurrentUser);
+  return $addedBill->Data;
 })->RequiredData(['Title', 'Amount', 'DueDate', 'AppliesTo', 'PayTo'])->Authenticate()->RequiredPermissions(Permissions::$AddBills);
 
 /**
@@ -107,7 +83,7 @@ $Router->Get('/bills/{id}', function($id) {
 
   // Data Type Conversions
   $bill->Amount = floatval($bill->Amount);
-  $bill->FullyPaid = ($bill->FullyPaid == 0) ? false : true;
+  //$bill->FullyPaid = ($bill->FullyPaid == 0) ? false : true;
 
   $bill->Id = $id;
 

@@ -78,7 +78,7 @@
                         <td data-bind="text: Title"></td>
                         <td data-bind="text: DueDate + ' (' + $parent.GetNumberOfDaysUntilBillIsDue($data) + ' days)'"></td>
                         <td data-bind="text: $parent.GetBillRemaining($data)"></td>
-                        <td>
+                        <td class="bill-actions">
                             <button class="btn btn-primary" data-bind="click: $parent.PayBill"><i class="fas fa-dollar-sign"></i>&nbsp;Pay</button>
                             <!-- ko if: $root.System.DoesUserHaveAccess('delete_bills') -->
                             <button class="btn btn-danger" data-bind="click: $parent.DeleteBill"><i class="fas fa-trash"></i>&nbsp;Delete</button>

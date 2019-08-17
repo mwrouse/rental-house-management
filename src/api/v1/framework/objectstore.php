@@ -21,7 +21,7 @@ class ObjectStore {
             }
 
             if (is_null($results)) {
-                error_log($scope . ' ' . $key . ' => ' . gettype($results));
+                //error_log($scope . ' ' . $key . ' => ' . gettype($results));
                 return null;
             }
 
@@ -30,15 +30,22 @@ class ObjectStore {
                 array_push($final, json_decode($result['value']));
             }
 
-            if (count($final) == 0)
+            if (count($final) == 0) {
+                #error_log($scope . ' ' . $key . ' => null');
                 return null;
+            }
 
-            if (count($final) == 1 && !is_null($key))
+            if (count($final) == 1 && !is_null($key)) {
+                #error_log($scope . ' ' . $key . ' => ' . json_encode($final[0]));
                 return $final[0];
+            }
 
+            #error_log($scope . ' ' . $key . ' => ' . json_encode($final));
             return $final;
         }
         catch (Exception $e) {
+            error_log("Exception in ObjectStore::Get(" . $scope . ", " . $key . "): " . $e);
+            error_log($e);
             return null;
         }
     }

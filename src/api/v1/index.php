@@ -99,31 +99,7 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
  * Modify a bill
  */
 $Router->Post('/bills/{id}/edit', function($id) {
-  /*global $Router;
 
-  // Verify that the bill exists
-  $bill = $Router->RunLocal('GET', '/bills/'.$id);
-  if (is_null($bill) || !isset($bill->Data)) {
-    $this->Abort('404', 'Invalid Bill');
-  }
-  $bill = $bill->Data;
-
-  // Update the bill
-  $db = database();
-  $res = $db->query("UPDATE bills SET Title=?, DueDate=?, Amount=? WHERE Id=?", [
-    $this->Data['Title'],
-    $this->Data['DueDate'],
-    $this->Data['Amount'],
-    $bill['Id']
-  ]);
-
-  // Get the new bill data
-  $bill = $Router->RunLocal('GET', '/bills/'.$id);
-  if (!is_null($bill) && isset($bill->Data)) {
-    return $bill->Data;
-  }
-
-  $this->Abort('204', 'Could not update bill');*/
 })->RequiredData(['Title', 'DueDate', 'Amount'])->Authenticate();
 
 /**
@@ -131,6 +107,7 @@ $Router->Post('/bills/{id}/edit', function($id) {
  */
 $Router->Post('/bills/{id}/delete', function($id) {
   ObjectStore::Delete('bills', $id);
+  ObjectStore::Delete('payments', $id);
 })->Authenticate()->RequiredPermissions(Permissions::$DeleteBills);
 
 

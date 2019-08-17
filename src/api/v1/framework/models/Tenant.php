@@ -14,6 +14,23 @@ class Tenant {
     public $EndDate;
     public $CreationDate;
 
+
+    public function Save() {
+        $serializableTenant = [
+            'Id' => $this->Id,
+            'FirstName' => $this->FirstName,
+            'LastName' => $this->LastName,
+            'Phone' => $this->Phone,
+            'StartDate' => $this->StartDate,
+            'EndDate' => $this->EndDate,
+            'CreationDate' => $this->CreationDate
+        ];
+
+        ObjectStore::Save('tenants', $this->Id, $serializableTenant);
+
+        return $this;
+    }
+
     /**
      * Builds a tenant class from an object
      */

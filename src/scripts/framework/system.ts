@@ -18,6 +18,7 @@ class System {
     public WhenReady: JQueryPromise<any>;
     private _readyDfd: JQueryDeferred<any>;
     public Hash: KnockoutObservable<string> = ko.observable('');
+    public Search: KnockoutObservable<string> = ko.observable('');
 
     constructor() {
         this._readyDfd = $.Deferred<any>();
@@ -32,10 +33,15 @@ class System {
             this._ping();
         }, 60000 * 5);
 
-        this.Hash(window.location.hash.replace('#!/', ''));
+        this.Hash(window.location.hash.replace('#!/', '').split('?')[0]);
         window.addEventListener('hashchange', () => {
-            let hash = window.location.hash.replace('#!/', '');
-            this.Hash(hash);
+            let hash = window.location.hash.replace('#!/', '').split('?');
+            this.Hash(hash[0]);
+
+            if (hash.length > 1)
+                this.Search(hash[1]);
+            else
+                this.Search('');
         });
     }
 
@@ -63,6 +69,18 @@ class System {
 
     public ChangeHash = (hash: any): void => {
         window.location.hash = '#!/' + hash;
+    };
+
+    public GetURLParameter = (paramName: string, url: string = window.location.href): string => {
+        let param: string = '';
+
+        var regex = new RegExp("[?&]" + paramName + "(=([^&]*)|&|#|$)"),
+            results = regex.exec(url);
+
+        if (results && results[2])
+            param = decodeURIComponent(results[2].replace(/\+/g, " "));
+
+        return param;
     };
 
     /**

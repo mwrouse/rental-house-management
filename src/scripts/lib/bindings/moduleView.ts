@@ -92,7 +92,8 @@ ko.bindingHandlers['moduleView'] = {
 
                         ko.applyBindingsToDescendants(vm, element);
 
-                        window.location.hash = '#!/' + manifest.Key;
+                        if (window.location.hash == "")
+                            window.location.hash = '#!/' + manifest.Key;
 
                         ko.utils.domNodeDisposal.addDisposeCallback(element, () => {
                             try {

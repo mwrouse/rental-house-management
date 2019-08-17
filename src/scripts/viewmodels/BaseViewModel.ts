@@ -15,7 +15,7 @@ class BaseViewModel {
 
     constructor() {
         let hash = window.location.hash.replace('#!/', '').split('/')[0];
-        console.log(hash);
+
         for (let module of this.System.Modules) {
             if (module.Key == hash)
                 this.ActiveModule(module);
@@ -29,6 +29,7 @@ class BaseViewModel {
 
 
     public ChangeView = (manifest: IManifest) => {
+        window.location.hash = "";
         this.ActiveModule(manifest);
     };
 

@@ -121,7 +121,7 @@ class BillsViewModel {
     public ActiveBill: KnockoutObservable<IBill> = ko.observable(null);
     public PayBill = (bill: IBill): void => {
         this.ActiveBill(bill);
-        system.ChangeHash('bills/pay');
+        system.ChangeHash('bills/pay?id=' + bill.Id);
     };
 
     // Removes a bill
@@ -141,8 +141,22 @@ class BillsViewModel {
         if (bill == null)
         {
             if (system.Hash() == 'bills/pay') {
-                console.warn('No active bill');
-                system.ChangeHash('bills');
+                let idParam = system.GetURLParameter('id');
+                if (idParam != "") {
+                    let bills = this.Bills();
+                    if (bills == [])
+                        return null;
+                    for (let i = 0; i < bills.length; i++) {
+                        if (bills[i].Id == idParam) {
+                            this.ActiveBill(bills[i]);
+                            return this.ActiveBill();
+                        }
+                    }
+                }
+                else {
+                    console.warn('No active bill');
+                    system.ChangeHash('bills');
+                }
             }
             return null;
         }

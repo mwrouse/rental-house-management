@@ -214,6 +214,9 @@ class BillsViewModel {
         return 5.00;
     });
 
+    public CancelPayment = () => {
+        system.ChangeHash('bills');
+    };
 
     public MakeBillPayment = (method: IPaymentMethod) => {
         let bill = this.ActiveBill();

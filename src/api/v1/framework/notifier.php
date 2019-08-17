@@ -47,7 +47,7 @@ class Notifier {
 
         $msg = $actor->AbbreviatedName . " paid $" . $amount . " to '" . $bill->Title . "' \n";
         $msg .= "Remaining: $" . $bill->Remaining . " \n";
-        $msg .= "\nPaid So Far:\n";
+        $msg .= "\nRemaining Per Person:\n";
 
         // Mark down who has paid what
         foreach ($bill->AppliesTo as $appliesTo) {
@@ -59,7 +59,7 @@ class Notifier {
                     $amnt += $payment->Amount;
             }
 
-            $msg .= strval($amnt) . "\n";
+            $msg .= strval($bill->Split - $amnt) . "\n";
         }
 
         // Get phone numbers to send this to

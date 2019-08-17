@@ -127,11 +127,12 @@ class SessionManager {
         if (is_null($this->Session))
             return;
 
-        $user = ObjectStore::Get('identities', $this->Session->Username);
+        $user = Identity::Get($this->Session->Username);
+        //error_log('Session User: ' . json_encode($user));
         if (is_null($user))
             return;
 
-        $this->CurrentUser = ObjectStore::Get('tenants', $user->TenantId);
+        $this->CurrentUser = $user->Tenant;
         if (is_null($this->CurrentUser))
             return;
 

@@ -24,16 +24,7 @@ $Router->SetParameters([
  * Retrieves all unpaid bills
  */
 $Router->Get('/bills', function() {
-  global $Router;
-
-  $billIds = ObjectStore::GetKeysForScope('bills');
-
-  $bills = [];
-  foreach ($billIds as $billId) {
-    $bill = $Router->RunLocal('GET', sprintf('/bills/%s', $billId));
-    array_push($bills, $bill->Data);
-  }
-
+  $bills = Bill::GetAll();
   return $bills;
 })->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 
@@ -41,9 +32,8 @@ $Router->Get('/bills', function() {
  * Make a new bill
  */
 $Router->Post('/bills/new', function() {
-  global $Router;
 
-  $bill = [
+  $rawBill = [
     'Id' => Guid::NewGuid(),
     'Title' => $this->Data['Title'],
     'Amount' => $this->Data['Amount'],
@@ -55,48 +45,21 @@ $Router->Post('/bills/new', function() {
     'FullyPaid' => False
   ];
 
-  ObjectStore::Save('bills', $bill['Id'], $bill);
+  $bill = Bill::Parse($rawBill);
+  // Error if null
 
-  // Get the saved bill to confirm it was added
-  $addedBill = $Router->RunLocal('GET', sprintf('/bills/%s', $bill['Id']));
+  $bill->Save();
 
-  Notifier::NewBill($addedBill->Data, $this->Session->CurrentUser);
-  return $addedBill->Data;
+  $addedBill = Bill::Get($rawBill['Id']);
+  Notifier::NewBill($addedBill, $this->Session->CurrentUser);
+  return $addedBill;
 })->RequiredData(['Title', 'Amount', 'DueDate', 'AppliesTo', 'PayTo'])->Authenticate()->RequiredPermissions(Permissions::$AddBills);
 
 /**
  * Get a bill specific bill
  */
 $Router->Get('/bills/{id}', function($id) {
-  global $Router;
-
-  $bill = ObjectStore::Get('bills', $id);
-
-  // Retrieve the tenant
-  $tenant = $Router->RunLocal('GET', sprintf('/tenants/%s', $bill->CreatedBy));
-  $bill->CreatedBy = $tenant->Data;
-
-  // Retrieve the payment target
-  $target = $Router->RunLocal('GET', sprintf('/recipients/%s', $bill->PayTo));
-  if (!is_null($target))
-    $bill->PayTo = $target->Data;
-
-  // Data Type Conversions
-  $bill->Amount = floatval($bill->Amount);
-  //$bill->FullyPaid = ($bill->FullyPaid == 0) ? false : true;
-
-  $bill->Id = $id;
-
-  // Get payments
-  $payments = $Router->RunLocal('GET', sprintf('/bills/%s/payments', $id));
-  $bill->Payments = $payments->Data;
-
-  // Calculate Remainder
-  $bill->Remaining = $bill->Amount;
-  foreach ($bill->Payments as $payment) {
-    $bill->Remaining -= $payment->Amount;
-  }
-
+  $bill = Bill::Get($id);
   return $bill;
 })->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 
@@ -106,17 +69,7 @@ $Router->Get('/bills/{id}', function($id) {
 $Router->Get('/bills/{id}/payments', function($id) {
   global $Router;
 
-  $payments = ObjectStore::Get('payments', $id);
-  if (is_null($payments))
-    $payments = [];
-
-  if (!is_array($payments))
-    $payments = [$payments];
-
-  for ($i = 0; $i < count($payments); $i++) {
-    $tenant = $Router->RunLocal('GET', sprintf('/tenants/%s', ($payments[$i])->PaidBy));
-    ($payments[$i])->PaidBy = $tenant->Data;
-  }
+  $payments = Payment::Get($id);
 
   return $payments;
 })->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
@@ -133,7 +86,7 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
     $payments = [];
 
   $payment = [
-    'BillID' => $id,
+    'BillId' => $id,
     'Amount' => $this->Data['Amount'],
     'PaidBy' => $this->Session->CurrentUser->Id,
     'Date' => date('Y-m-d')
@@ -192,16 +145,7 @@ $Router->Post('/bills/{id}/delete', function($id) {
  * Retrieves all active tenants
  */
 $Router->Get('/tenants', function() {
-  global $Router;
-
-  $tenantIds = ObjectStore::GetKeysForScope('tenants');
-
-  $tenants = [];
-  foreach ($tenantIds as $tenantId) {
-    $tenant = $Router->RunLocal('GET', sprintf('/tenants/%s', $tenantId));
-    array_push($tenants, $tenant->Data);
-  }
-
+  $tenants = Tenant::GetAll();
   return $tenants;
 })->Authenticate();
 
@@ -241,15 +185,7 @@ $Router->Post('/tenants/new', function() {
  * Get a specific tenant
  */
 $Router->Get('/tenants/{id}', function($id) {
-  $tenant = ObjectStore::Get('tenants', $id);
-  if (is_null($tenant))
-    return null;
-
-  $tenant->Name = $tenant->FirstName . ' ' . $tenant->LastName;
-  $tenant->AbbreviatedName = $tenant->FirstName . ' ' . substr($tenant->LastName, 0, 1) . '.';
-
-  //$tenant->Permissions = explode(",", $tenant->Permissions);
-
+  $tenant = Tenant::Get($id);
   return $tenant;
 })->Authenticate();
 
@@ -297,17 +233,7 @@ $Router->Post('/tenants/{id}/edit', function($id) {
  * Retrieve all targets
  */
 $Router->Get('/recipients', function() {
-  global $Router;
-
-  $targetIds = ObjectStore::GetKeysForScope('recipient');
-
-  $targets = [];
-  foreach ($targetIds as $targetId) {
-    $target = $Router->RunLocal('GET', sprintf('/recipients/%s', $targetId));
-    if (!is_null($target))
-      array_push($targets, $target->Data);
-  }
-
+  $targets = Recipient::GetAll();
   return $targets;
 })->Authenticate();
 
@@ -340,41 +266,8 @@ $Router->Post('/recipients/new', function() {
  * Get a specific target
  */
 $Router->Get('/recipients/{id}', function($id) {
-  $target = ObjectStore::Get('recipient', $id);
-  if (is_null($target))
-    return null;
-  return $target;
-  /*global $Router;
-
-  $db = database();
-  $res = $db->query("SELECT Id, Name, Url, Archived FROM payment_targets WHERE Id=?", [
-    $id
-  ]);
-
-  if (is_null($res)) {
-    // Check if id belongs to a tenant
-    $tenant = $Router->RunLocal('GET', '/tenants/'.$id);
-    if (!is_null($tenant) && isset($tenant->Data)) {
-      // Convert to a target style object
-      $tenant->Data['Url'] = null;
-      $tenant->Data['IsTenant'] = true;
-      $tenant->Data['Archived'] = (is_null($tenant->Data['EndDate'])) ? false : (strtotime($tenant->Data['EndDate']) <= strtotime("now")) ? true : false;
-
-      return $tenant->Data;
-    }
-
-    // Does not belong to a tenant
-    $this->Abort('404', 'Could not find Payment Target');
-  }
-
-  $res = $res[0]; // Should only ever be on e
-
-  $res['IsTenant'] = false;
-
-  // Data Type conversion
-  $res['Archived'] = ($res['Archived'] == 0) ? false : true;
-
-  return $res;*/
+  $recipient = Recipient::Get($id);
+  return $recipient;
 })->Authenticate();
 
 /**

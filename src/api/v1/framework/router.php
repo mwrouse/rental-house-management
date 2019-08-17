@@ -228,6 +228,7 @@ class Route {
         return (object) ['Data' => $callbackReturn, 'Request' => $request->Serialize()];
       }
       catch (Exception $e) {
+        error_log($e);
         return (object) ['Data' => null, 'Error' => $e->getMessage(), 'Request' => $request->Serialize()];
       }
     }

@@ -68,7 +68,7 @@ class Tenant {
      */
     public static function GetAll() {
         $raw = ObjectStore::Get('tenants');
-        error_log(json_encode($raw));
+
         $tenants = [];
 
         foreach ($raw as $rawTenant) {

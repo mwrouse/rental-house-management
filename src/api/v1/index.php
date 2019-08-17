@@ -92,6 +92,10 @@ $Router->Post('/bills/{id}/payments/new', function($id) {
   array_push($bill->Payments, Payment::Parse($payment));
   $bill->Save();
 
+  $bill = Bill::Get($id); // Update
+
+  Notifier::PaidBill($bill, $payment['Amount'], $this->Session->CurrentUser);
+
   return Payment::Get($id);
 })->RequiredData(['Amount'])->Authenticate()->RequiredPermissions(Permissions::$ViewBills);
 

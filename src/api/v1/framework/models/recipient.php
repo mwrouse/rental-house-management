@@ -26,6 +26,7 @@ class Recipient {
     public $Id;
     public $Name;
     public $PaymentMethods;
+    public $Phone;
 
     /**
      * Builds a Recipient class
@@ -37,6 +38,7 @@ class Recipient {
         $recip = new Recipient();
         $recip->Id = $raw->Id;
         $recip->Name = $raw->Name;
+        $recip->Phone = $raw->Phone;
 
         $recip->PaymentMethods = [];
         foreach ($raw->PaymentMethods as $paymentMethod)

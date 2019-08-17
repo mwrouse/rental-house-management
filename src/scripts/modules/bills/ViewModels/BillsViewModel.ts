@@ -166,11 +166,11 @@ class BillsViewModel {
     public DoesActiveBillApplyToUser = ko.computed(() =>{
         let bill = this.ActiveBill();
         if (bill == null)
-            return;
+            return false;
 
         for (let tenantToPay of bill.AppliesTo)
         {
-            if (tenantToPay == system.CurrentUser.Id)
+            if (tenantToPay.Id == system.CurrentUser.Id)
                 return true;
         }
         return false;

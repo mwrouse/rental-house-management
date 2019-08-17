@@ -32,23 +32,29 @@ class DatabaseConnection {
    * @return Array            Array of rows from the query result
    */
   public function query($qry, $params=[]) {
-    $statement = $this->_conn->prepare($qry);
-    $statement->execute($params);
+    try {
+      $statement = $this->_conn->prepare($qry);
+      $statement->execute($params);
 
-    if ($statement->errorCode() == 0) {
-      // Get the rows returned from the query
-      $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+      if ($statement->errorCode() == 0) {
+        // Get the rows returned from the query
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-      // Return null if no rows were returned
-      if (count($rows) == 0) {
-        return null;
+        // Return null if no rows were returned
+        if (count($rows) == 0) {
+          return null;
+        }
+
+        return $rows;
       }
-
-      return $rows;
+      else {
+        $errors = $statement->errorInfo();
+        throw new Exception($errors[2]); // Throw the error message
+      }
     }
-    else {
-      $errors = $statement->errorInfo();
-      throw new Exception($errors[2]); // Throw the error message
+    catch (Exception $e) {
+      error_log($e);
+      throw $e;
     }
   }
 

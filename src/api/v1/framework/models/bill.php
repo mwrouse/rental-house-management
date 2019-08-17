@@ -57,7 +57,7 @@ class Bill {
     public $CreatedBy;
 
     public $Payments;
-
+    public $Split;
 
     /**
      * Saves to the database
@@ -107,9 +107,10 @@ class Bill {
 
         $bill->CreatedBy = Tenant::Get($raw->CreatedBy);
 
+        // Populate who the bill applies to
         $bill->AppliesTo = [];
         foreach ($raw->AppliesTo as $appliedTo)
-        array_push($bill->AppliesTo, Tenant::Get($appliedTo));
+            array_push($bill->AppliesTo, Tenant::Get($appliedTo));
 
         $bill->PayTo = Recipient::Get($raw->PayTo);
 
@@ -119,6 +120,12 @@ class Bill {
         $bill->Remaining = $bill->Amount;
         foreach ($bill->Payments as $payment)
             $bill->Remaining = $bill->Remaining - $payment->Amount;
+
+        // Calculate split
+        if (count($bill->AppliesTo) > 0)
+            $bill->Split = floatval($bill->Amount / count($bill->AppliesTo));
+        else
+            $bill->Split = $bill->Amount;
 
         return $bill;
     }

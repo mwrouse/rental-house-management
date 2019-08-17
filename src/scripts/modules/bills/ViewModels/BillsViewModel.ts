@@ -124,6 +124,10 @@ class BillsViewModel {
         return payment.PaidBy.AbbreviatedName + ' paid $' + numberWithCommas(payment.Amount) + ' on ' + payment.Date + '.';
     }
 
+    public GetCreationString = (bill: IBill) => {
+        return bill.CreatedBy.AbbreviatedName + ' created this bill on ' + bill.CreationDate + " with a total of $" + numberWithCommas(bill.Amount) + " and due on " + bill.DueDate;
+    };
+
     public ActiveBill: KnockoutObservable<IBill> = ko.observable(null);
     public PayBill = (bill: IBill): void => {
         this.ActiveBill(bill);

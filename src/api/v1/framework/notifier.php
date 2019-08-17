@@ -32,7 +32,8 @@ class Notifier {
         $msg = $actor->AbbreviatedName . " created '" . $bill->Title . "'\n";
         $msg .= 'Due: ' . $bill->DueDate . "\n";
         $msg .= 'Amount: $' . $bill->Amount . "\n";
-        $msg .= 'Split: $' . $bill->Split;
+        $msg .= 'Split: $' . $bill->Split . "\n";
+        $msg .= "\nTo Pay: https://" . $_SERVER['HTTP_HOST'] . "/#!/bills/pay?id=" . urlencode($bill->Id);
 
         $sendTo = array_map(function ($i) { return $i->Phone; }, $bill->AppliesTo);
 
@@ -48,11 +49,12 @@ class Notifier {
         $msg = $actor->AbbreviatedName . " paid $" . $amount . " to '" . $bill->Title . "' \n";
         $msg .= "Remaining: $" . strval($bill->Remaining) . " \n";
         $msg .= "\nRemaining Per Person:\n";
-
+        error_log($_SERVER['HTTP_HOST']);
         // Mark down who has paid what
         foreach ($bill->AppliesTo as $appliesTo) {
             $msg .= $appliesTo->AbbreviatedName . ": $" . strval($appliesTo->Remaining) . "\n";
         }
+        $msg .= "\nTo Pay: https://" . $_SERVER['HTTP_HOST'] . "/#!/bills/pay?id=" . urlencode($bill->Id);
 
         // Get phone numbers to send this to
         $sendTo = $bill->PayTo->Phone;

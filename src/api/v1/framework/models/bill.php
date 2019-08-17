@@ -59,6 +59,7 @@ class Bill {
     public $Payments;
     public $Split;
 
+
     /**
      * Saves to the database
      */

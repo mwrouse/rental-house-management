@@ -88,9 +88,14 @@
                         </td>
                     </tr>
                 </tbody>
-                <tbody data-bind="attr: { id: $parent.GetBillCollapseId($data) }, foreach: Payments" class="table-sm collapse">
+                <tbody data-bind="attr: { id: $parent.GetBillCollapseId($data) }" class="table-sm collapse">
+                    <!-- ko foreach: Payments -->
+                        <tr>
+                            <td data-bind="text: $root.GetPaymentString($data)" colspan="10"></td>
+                        </tr>
+                    <!-- /ko -->
                     <tr>
-                        <td data-bind="text: $root.GetPaymentString($data)" colspan="10"></td>
+                        <td data-bind="text: $root.GetCreationString($data)" colspan="10"></td>
                     </tr>
                 </tbody>
             <!-- /ko -->

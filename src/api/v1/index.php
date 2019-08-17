@@ -62,7 +62,7 @@ $Router->Post('/bills/new', function() {
     'CreatedBy' => $this->Session->CurrentUser->Id,
     'CreationDate' => date('Y-m-d H:i:s'),
     'PayTo' => $this->Data['PayTo'],
-    'FullyPaid' => False
+    'FullyPaid' => False,
   ];
 
   $bill = Bill::Parse($rawBill);

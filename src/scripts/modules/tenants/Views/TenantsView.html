@@ -1,28 +1,95 @@
 <div id="TenantsView" data-bind="block: IsLoading">
+<!-- ko if: $root.System.IsOnPage('tenants') -->
     <h1 class="h1 mb-2 text-gray-800">Tenants</h1>
 
-    <div class="table-responsive">
-            <table class="table table-bordered" id="billsTable" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>Tenant</th>
-                        <th>Start Date</th>
-                        <th>Unpaid Amount</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: Tenants">
-                    <tr>
-                        <td data-bind="text: Name"></td>
-                        <td data-bind="text: StartDate"></td>
-                        <td data-bind="">$0</td>
-                        <td style="background-color:#fff">
-                            <!-- ko if: $root.System.DoesUserHaveAccess('delete_tenants') -->
-                            <button class="btn btn-danger"  data-toggle="modal" data-target="#exampleModal"><i class="fas fa-trash"></i>&nbsp;Delete</button>
-                            <!-- /ko -->
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <!-- ko if: $root.System.DoesUserHaveAccess('add_tenants') -->
+            <button type="button" class="btn btn-success" data-bind="click: GoToNewTenantPage">
+                <i class="fas fa-plus"></i>&nbsp;New Tenant
+            </button>
+            <!-- /ko -->
         </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered" id="billsTable" width="100%" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>Tenant</th>
+                    <th>Start Date</th>
+                    <th>Unpaid Amount</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: Tenants">
+                <tr>
+                    <td data-bind="text: Name"></td>
+                    <td data-bind="text: StartDate"></td>
+                    <td data-bind="">$0</td>
+                    <td style="background-color:#fff">
+                        <!-- ko if: $root.System.DoesUserHaveAccess('delete_tenants') -->
+                        <button class="btn btn-danger" data-bind="click: $parent.DeleteTenant" data-toggle="modal" data-target="#exampleModal"><i class="fas fa-trash"></i>&nbsp;Delete</button>
+                        <!-- /ko -->
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+<!-- /ko -->
+
+<!-- ko if: $root.System.IsOnPage('tenants/new') -->
+    <div class="new-bill-screen" style="text-align: center">
+        <h1 class="h1 mb-2 text-gray-800">New Tenant</h1>
+
+        <form class="new-bill-form">
+            <div class="form-group row">
+                <label for="tenantName" class="col-sm-3 col-form-label">Full Name</label>
+                <div class="col-sm-6">
+                    <input class="form-control" type="text" id="tenantName" placeholder="Steve Jones" pattern="(.*)? (.*)?" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="tenantNumber" class="col-sm-3 col-form-label" >Phone Number (###-###-####)</label>
+                <div class="col-sm-6">
+                    <input class="form-control" type="tel" id="tenantNumber" placeholder="314-867-5309" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required>
+                </div>
+            </div>
+
+            <h4 class="h3 mb-2 text-gray-800">Account</h3>
+
+            <div class="form-group row">
+                <label for="username" class="col-sm-3 col-form-label">Username</label>
+                <div class="col-sm-6">
+                    <input class="form-control" type="text" id="username" name="username" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="password" class="col-sm-3 col-form-label">Password</label>
+                <div class="col-sm-6">
+                    <input class="form-control" type="password" id="password" name="password" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="password2" class="col-sm-3 col-form-label">Confirm Password</label>
+                <div class="col-sm-6">
+                    <input class="form-control" type="password" id="password2" name="password2" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="permissions" class="col-sm-3 col-form-label">Permissions</label>
+                <div class="col-sm-6" data-bind="foreach: $root.System.AllPossiblePermissions" style="text-align: left">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="permissions" data-bind="value: Key, attr: { id: Key }">
+                        <label class="form-check-label" data-bind="html: Display, attr: { for: Key }"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary form-control" data-bind="click: SubmitNewTenant">Create</button>
+            </div>
+        </form>
+    </div>
+<!-- /ko -->
 </div>

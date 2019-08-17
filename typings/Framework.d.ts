@@ -39,11 +39,12 @@ interface IBill {
     Amount: number;
     Remaining: number;
     DueDate: string;
-    Creator: ITenant;
+    CreatedBy: ITenant;
     FullyPaid: boolean;
-    AppliesTo: string[];
+    AppliesTo: IAppliesTo[];
     Payments: IPayment[];
     PayTo: IRecipient;
+    CreationDate: string;
 }
 
 interface IPayment {
@@ -65,6 +66,13 @@ interface ITenant {
     Permissions: string[];
 }
 
+
+interface IAppliesTo extends ITenant {
+    Remaining: number;
+    Paid: number;
+}
+
+
 interface IRecipient {
     Id: string;
     Name: string;
@@ -77,7 +85,11 @@ interface IPaymentMethod {
     Source: string;
 }
 
-
 interface IPaymentHandler {
 
+}
+
+interface IPermissions {
+    Display: string;
+    Key: string;
 }

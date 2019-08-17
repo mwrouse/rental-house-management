@@ -3,6 +3,12 @@ import * as PaymentHandler from "scripts/../framework/paymentHandler";
 
 var ko: KnockoutStatic = require('knockout');
 
+function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(txt){
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+}
+
 class System {
     public Configuration: ISystemConfiguration = null;
     public Modules: IManifest[] = [];
@@ -14,6 +20,7 @@ class System {
 
     public CurrentUser: ITenant = null;
 
+    public AllPossiblePermissions: IPermissions[] = [];
 
     public WhenReady: JQueryPromise<any>;
     private _readyDfd: JQueryDeferred<any>;
@@ -102,6 +109,14 @@ class System {
             .then((modules) => {
                 for (let i = 0; i < modules.length; i++) {
                     let module = modules[i];
+
+                    for (let permission of module.AssociatedPermissions) {
+                        this.AllPossiblePermissions.push({
+                            Display: toTitleCase(permission.replace('_', ' ')),
+                            Key: permission
+                        });
+                    }
+
                     if (module.DemandPermission)
                     {
                         if (!this.DoesUserHaveAccess(module.DemandPermission))

@@ -6,6 +6,17 @@ class Identity {
 
     public $Permissions;
 
+
+    public function Save($username, $password) {
+        $data = [
+            'TenantId' => $this->TenantId,
+            'Permissions' => $this->Permissions,
+            'Password' => password_hash($password, PASSWORD_DEFAULT)
+        ];
+
+        ObjectStore::Save('identities', $username, $data);
+    }
+
     /**
      * Builds a Identity class
      */
@@ -23,7 +34,7 @@ class Identity {
 
     public static function Get($username) {
         $raw = ObjectStore::Get('identities', $username);
-        if (is_null(raw))
+        if (is_null($raw))
             return null;
 
         return Identity::Parse($raw);

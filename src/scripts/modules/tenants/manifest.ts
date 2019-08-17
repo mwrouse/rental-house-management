@@ -1,5 +1,7 @@
 let permissions = {
-    'ViewTenants': 'view_tenants'
+    'ViewTenants': 'view_tenants',
+    'AddTenants': 'add_tenants',
+    'DeleteTenants': 'delete_tenants'
 };
 let allPermissions = [];
 for (let permission in permissions)

@@ -144,46 +144,48 @@ $Router->Post('/bills/{id}/delete', function($id) {
  */
 $Router->Get('/tenants', function() {
   $tenants = Tenant::GetAll();
-  return $tenants;
+
+  $final = [];
+
+  foreach ($tenants as $tenant) {
+    if ($tenant->EndDate == "")
+      array_push($final, $tenant);
+  }
+
+  return $final;
 })->Authenticate();
 
 /**
  * Create a tenant
  */
 $Router->Post('/tenants/new', function() {
-  /*global $Router;
+  $tenant = new Tenant();
+  $tenant->Id = Guid::NewGuid();
+  $tenant->FirstName = $this->Data['FirstName'];
+  $tenant->LastName = $this->Data['LastName'];
+  $tenant->Phone = str_replace('-', '', $this->Data['Phone']) . "";
+  $tenant->StartDate = date('Y-m-d H:i:s');
+  $tenant->CreationDate = date('Y-m-d H:i:s');
 
-  // TODO: Verfy StartDate is an actual date
+  $tenant->Save();
 
-  $id = uuid(); // Id for the new tenant
+  $identity = new Identity();
+  $identity->TenantId = $tenant->Id;
+  $identity->Permissions = $this->Data['Permissions'];
 
-  // Create the tenant
-  $db = database();
-  $res = $db->query("INSERT INTO tenants (Id, FirstName, LastName, StartDate) VALUES (?, ?, ?, ?)", [
-    $id,
-    $this->Data['FirstName'],
-    $this->Data['LastName'],
-    $this->Data['StartDate']
-  ]);
+  $identity->Save($this->Data['Username'], $this->Data['Password']);
 
-
-  // Verify the tenant was actually created
-  $url = sprintf('/tenants/%s', $id);
-  $tenant = $Router->RunLocal('GET', $url);
-
-  if (!is_null($tenant) && isset($tenant->Data)) {
-    return $tenant->Data; // Tenant Created
-  }
-
+  Notifier::NewTenant($tenant, $this->Data['Username'], $this->Data['Password']);
   // Failed to create tenant
-  $this->Abort('204', 'Could not create tenant');*/
-})->RequiredData(['FirstName', 'LastName', 'StartDate'])->Authenticate();
+  /*$this->Abort('204', 'Could not create tenant');*/
+})->RequiredData(['FirstName', 'LastName', 'Phone', 'Permissions', 'Username', 'Password'])->Authenticate();
 
 /**
  * Get a specific tenant
  */
 $Router->Get('/tenants/{id}', function($id) {
   $tenant = Tenant::Get($id);
+
   return $tenant;
 })->Authenticate();
 
@@ -219,7 +221,16 @@ $Router->Post('/tenants/{id}/edit', function($id) {
   $this->Abort('204', 'Could not update tenant');*/
 })->RequiredData(['FirstName', 'LastName', 'StartDate'])->Authenticate();
 
+/**
+ * Removes a tenant
+ */
+$Router->Post('/tenants/{id}/delete', function($id) {
+  $tenant = Tenant::Get($id);
+  $tenant->EndDate = date('Y-m-d H:i:s');
 
+  $tenant->Save();
+
+})->Authenticate()->RequiredPermissions(Permissions::$DeleteTenants);
 
 /****************************
  *      Payment Recipients     *

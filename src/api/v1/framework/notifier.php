@@ -27,8 +27,6 @@ class Notifier {
      *           BILLS           *
      *****************************/
     public static function NewBill($bill, $actor) {
-        $twilio = getTwilioClient();
-
         $msg = $actor->AbbreviatedName . " created '" . $bill->Title . "'\n";
         $msg .= 'Due: ' . $bill->DueDate . "\n";
         $msg .= 'Amount: $' . $bill->Amount . "\n";
@@ -44,8 +42,6 @@ class Notifier {
      * Send alert that a bill was paid
      */
     public static function PaidBill($bill, $amount, $actor) {
-        $twilio = getTwilioClient();
-
         $msg = $actor->AbbreviatedName . " paid $" . $amount . " to '" . $bill->Title . "' \n";
         $msg .= "Remaining: $" . strval($bill->Remaining) . " \n";
         $msg .= "\nRemaining Per Person:\n";
@@ -72,6 +68,21 @@ class Notifier {
 
 
 
+    /*****************************
+     *           Tenant           *
+     *****************************/
+
+    public static function NewTenant($tenant, $username, $password) {
+        $msg = "Hello, " . $tenant->FirstName . ".\n";
+        $msg .= "You have been added as a tenant on the bill monitoring website.\n";
+        $msg .= "Username: " . $username . "\n";
+        $msg .= "Password: " . $password . "\n\n";
+        $msg .= "You can login at https://" . $_SERVER['HTTP_HOST'];
+
+        Notifier::_SendSMS($msg, $tenant->Phone);
+    }
+
+
     private static function _SendSMS($msg, $to) {
         if (!is_array($to))
             $to = [$to];
@@ -85,10 +96,10 @@ class Notifier {
 
             try {
                 $msg = $twilio->service->messages
-                                        ->create($number,
+                                        ->create(strval($number),
                                                 [
                                                     "body" => $msg,
-                                                    "from" => $twilio->config['number']
+                                                    "from" => strval($twilio->config['number'])
                                                 ]);
             }
             catch (Exception $e) {

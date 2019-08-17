@@ -136,10 +136,13 @@ class BillsViewModel {
 
     // Removes a bill
     public DeleteBill = (bill: IBill): void => {
+        this.IsLoading(true);
+
         $.post('/api/v1/bills/' + bill.Id + '/delete')
         .done(() => {
             //dfd.resolve();
             //this.ActiveBill(null);
+            this.IsLoading(false);
             this._loadBills();
         });
     };

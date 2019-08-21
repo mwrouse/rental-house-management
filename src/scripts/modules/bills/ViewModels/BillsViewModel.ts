@@ -2,7 +2,7 @@ var ko = require('knockout');
 var system = require('system');
 
 function numberWithCommas(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return x.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 class BillsViewModel {
@@ -235,7 +235,13 @@ class BillsViewModel {
         if (bill == null)
             return 0.00;
 
-        return 5.00;
+        for (let i = 0; i < bill.AppliesTo.length; i++) {
+            if (bill.AppliesTo[i].Id = system.CurrentUser.Id)
+            {
+                return bill.AppliesTo[i].Remaining;
+            }
+        }
+        return 0.00;
     });
 
     public CancelPayment = () => {

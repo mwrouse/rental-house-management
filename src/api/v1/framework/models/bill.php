@@ -68,12 +68,18 @@ class Bill {
      * Saves to the database
      */
     public function Save() {
+        // Recalculate the remainder
+        $this->Remaining = $this->Amount;
+        foreach ($this->Payments as $payment)
+            $this->Remaining = $this->Remaining - $payment->Amount;
+        $this->Remaining = round($this->Remaining, 2);
+
         // Save the bill
         $serializableBill = [
             'Id' => $this->Id,
             'Title' => $this->Title,
             'Amount' => $this->Amount,
-            'FullyPaid' => $this->FullyPaid,
+            'FullyPaid' => ($this->Remaining == 0),
             'DueDate' => $this->DueDate,
             'CreationDate' => $this->CreationDate,
             'CreatedBy' => $this->CreatedBy->Id,
@@ -121,15 +127,18 @@ class Bill {
 
         $bill->Payments = Payment::Get($bill->Id);
 
-
         // Calculate the remaining amount
         $payments = [];
         $bill->Remaining = $bill->Amount;
         foreach ($bill->Payments as $payment)
         {
             $bill->Remaining = $bill->Remaining - $payment->Amount;
-            $payments[$payment->PaidBy->Id] += $payment->Amount;
+            if (array_key_exists($payment->PaidBy->Id, $payments))
+                $payments[$payment->PaidBy->Id] += $payment->Amount;
+            else
+                $payments[$payment->PaidBy->Id] = $payment->Amount;
         }
+        $bill->Remaining = round($bill->Remaining, 2);
 
         // Calculate split
         if (count($bill->AppliesTo) > 0)
@@ -137,13 +146,15 @@ class Bill {
         else
             $bill->Split = $bill->Amount;
 
+        $bill->Split = round($bill->Split, 2);
+
         foreach ($bill->AppliesTo as $appliesTo) {
             if (!array_key_exists($appliesTo->Id, $payments))
                 $appliesTo->Paid = 0;
             else
                 $appliesTo->Paid = $payments[$appliesTo->Id];
 
-            $appliesTo->Remaining = $bill->Split - $appliesTo->Paid;
+            $appliesTo->Remaining = round($bill->Split - $appliesTo->Paid, 2);
         }
 
         return $bill;
@@ -163,7 +174,12 @@ class Bill {
 
         $final = [];
         foreach ($raw as $bill)
-            array_push($final, Bill::Parse($bill));
+        {
+            $parsed = Bill::Parse($bill);
+            if ($parsed->FullyPaid)
+                continue;
+            array_push($final, $parsed);
+        }
 
         usort($final, function($b1, $b2) {
             return strcmp($b1->DueDate, $b2->DueDate);

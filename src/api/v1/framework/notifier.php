@@ -62,6 +62,23 @@ class Notifier {
         Notifier::_SendSMS($msg, $sendTo); // Send the SMS
     }
 
+    /**
+     * Send alert when bill is late
+     */
+    public static function LateBillNotification($bill, $isOverDue=false) {
+
+        foreach ($bill->AppliesTo as $appliesTo) {
+            if ($appliesTo->Remaining > 0) {
+                // Only send if the person still owes to this bill
+                $msg = "This is a reminder that bill '" . $bill->Title . "' is " . ($isOverDue ? "overdue" : "due soon") . ".\n";
+                $msg .= "You have $" . strval($appliesTo->Remaining) . " remaining.";
+
+                Notifier::_SendSMS($msg, $appliesTo->Phone);
+            }
+        }
+
+    }
+
     public static function DeletedBill($bill, $actor) {
         $twilio = getTwilioClient();
     }

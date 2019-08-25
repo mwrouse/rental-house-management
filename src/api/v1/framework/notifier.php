@@ -71,7 +71,8 @@ class Notifier {
             if ($appliesTo->Remaining > 0) {
                 // Only send if the person still owes to this bill
                 $msg = "This is a reminder that bill '" . $bill->Title . "' is " . ($isOverDue ? "overdue" : "due soon") . ".\n";
-                $msg .= "You have $" . strval($appliesTo->Remaining) . " remaining.";
+                $msg .= "You have $" . strval($appliesTo->Remaining) . " remaining.\n";
+                $msg .= "\nTo Pay: https://" . $_SERVER['HTTP_HOST'] . "/#!/bills/pay?id=" . urlencode($bill->Id);
 
                 Notifier::_SendSMS($msg, $appliesTo->Phone);
             }

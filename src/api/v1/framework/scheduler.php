@@ -12,7 +12,7 @@ function RunReminders() {
 
         if (!$notify)
             continue;
-
+        error_log(json_encode($bill));
         // Send notification
         Notifier::LateBillNotification($bill, $days_until_due <= 0);
     }

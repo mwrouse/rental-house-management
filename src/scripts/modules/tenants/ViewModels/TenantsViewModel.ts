@@ -1,6 +1,10 @@
 var ko = require('knockout');
 var system = require('system');
 
+function numberWithCommas(x) {
+    return x.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 class TenantsViewModel {
     public IsLoading: KnockoutObservable<boolean> = ko.observable(true);
     public Tenants: KnockoutObservableArray<ITenant> = ko.observableArray([]);
@@ -16,6 +20,12 @@ class TenantsViewModel {
         system.ChangeHash('tenants/new');
     };
 
+    public GetTenantTotalRemaining = (tenant: ITenant): KnockoutComputed<string> => {
+        return ko.computed(() => {
+            return '$' + numberWithCommas((tenant as any).TotalRemaining);
+        });
+    }
+
 
     public DeleteTenant = (tenant: ITenant): void => {
         this.IsLoading(true);
@@ -25,6 +35,7 @@ class TenantsViewModel {
             window.location.reload();
         });
     };
+
 
 
     public SubmitNewTenant = (): JQueryPromise<any> => {

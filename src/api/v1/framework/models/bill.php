@@ -79,7 +79,7 @@ class Bill {
             'Id' => $this->Id,
             'Title' => $this->Title,
             'Amount' => $this->Amount,
-            'FullyPaid' => ($this->Remaining == 0),
+            'FullyPaid' => ($this->Remaining <= 0),
             'DueDate' => $this->DueDate,
             'CreationDate' => $this->CreationDate,
             'CreatedBy' => $this->CreatedBy->Id,
@@ -112,7 +112,7 @@ class Bill {
         $bill->Id = $raw->Id;
         $bill->Title = $raw->Title;
         $bill->DueDate = $raw->DueDate;
-        $bill->Amount = floatval($raw->Amount);
+        $bill->Amount = round(floatval($raw->Amount), 2);
         $bill->FullyPaid = $raw->FullyPaid;
         $bill->CreationDate = $raw->CreationDate;
 
@@ -152,7 +152,7 @@ class Bill {
             if (!array_key_exists($appliesTo->Id, $payments))
                 $appliesTo->Paid = 0;
             else
-                $appliesTo->Paid = $payments[$appliesTo->Id];
+                $appliesTo->Paid = round($payments[$appliesTo->Id], 2);
 
             $appliesTo->Remaining = round($bill->Split - $appliesTo->Paid, 2);
         }

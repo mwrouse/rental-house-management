@@ -144,10 +144,23 @@ $Router->Post('/bills/{id}/delete', function($id) {
  */
 $Router->Get('/tenants', function() {
   $tenants = Tenant::GetAll();
+  $bills = Bill::GetAll();
 
   $final = [];
 
   foreach ($tenants as $tenant) {
+    // Bill total
+    $tenant->TotalRemaining = 0;
+    foreach ($bills as $bill) {
+      foreach ($bill->AppliesTo as $appliesTo) {
+        if ($appliesTo->Id == $tenant->Id) {
+          $tenant->TotalRemaining += $appliesTo->Remaining;
+        }
+      }
+    }
+
+    $tenant->TotalRemaining = round($tenant->TotalRemaining, 2);
+
     if ($tenant->EndDate == "")
       array_push($final, $tenant);
   }
@@ -185,6 +198,19 @@ $Router->Post('/tenants/new', function() {
  */
 $Router->Get('/tenants/{id}', function($id) {
   $tenant = Tenant::Get($id);
+  $bills = Bill::GetAll();
+
+  // Bill total
+  $tenant->TotalRemaining = 0;
+  foreach ($bills as $bill) {
+    foreach ($bill->AppliesTo as $appliesTo) {
+      if ($appliesTo->Id == $tenant->Id) {
+        $tenant->TotalRemaining += $appliesTo->Remaining;
+      }
+    }
+  }
+
+  $tenant->TotalRemaining = round($tenant->TotalRemaining, 2);
 
   return $tenant;
 })->Authenticate();
